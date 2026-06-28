@@ -1,0 +1,12 @@
+# Python dependencies for the rakuten-securities-analysis skill scripts.
+# convert.py / nisa.py rely only on the standard library (no external deps).
+# make_og.py needs Pillow for drawing the OGP image (og.png).
+#
+# Install:  py -m pip install -r requirements.txt
+#
+# NOTE: keep this file ASCII-only. pip reads requirements with the system
+# locale encoding (CP932 on Japanese Windows), so non-ASCII comments break it.
+
+# make_og.py: image rendering (Image / ImageDraw / ImageFont).
+# Requires >=10.0 for textbbox, rounded_rectangle and Resampling.LANCZOS.
+Pillow>=10.0
