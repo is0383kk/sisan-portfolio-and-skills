@@ -451,6 +451,37 @@
       </sc-for>
     </div>
 
+    <!-- ============ NISA 非課税枠（生涯） ============ -->
+    <div class="pf-nisa-card">
+      <div class="pf-nisa-head">
+        <span class="pf-nisa-title">NISA 非課税枠（生涯）</span>
+        <span class="pf-nisa-sub">簿価ベース・残り枠</span>
+      </div>
+      <sc-for list="{{ nisa.bars }}" as="nb" hint-placeholder-count="2">
+        <div class="pf-nisa-frame">
+          <div class="pf-nisa-frame-top">
+            <span class="pf-nisa-frame-name"><i class="pf-swatch-sm" style="background:{{ nb.color }};"></i>{{ nb.label }}</span>
+            <span class="pf-nisa-frame-pct">{{ nb.pctTxt }}</span>
+          </div>
+          <div class="pf-nisa-track">
+            <div class="pf-nisa-fill" style="width:{{ nb.barPct }}; background:{{ nb.color }};"></div>
+          </div>
+          <div class="pf-nisa-frame-stat">使用 <b>{{ nb.usedTxt }}</b> / 残り <b>{{ nb.remainTxt }}</b> <span class="pf-nisa-cap">（上限 {{ nb.capTxt }}）</span></div>
+        </div>
+      </sc-for>
+      <div class="pf-nisa-total">
+        <div class="pf-nisa-frame-top">
+          <span class="pf-nisa-frame-name">合計</span>
+          <span class="pf-nisa-frame-pct">{{ nisa.total.pctTxt }}</span>
+        </div>
+        <div class="pf-nisa-track">
+          <div class="pf-nisa-fill" style="width:{{ nisa.total.tsumitateW }}; background:{{ nisa.total.tsumitateColor }};"></div>
+          <div class="pf-nisa-fill" style="width:{{ nisa.total.growthW }}; background:{{ nisa.total.growthColor }};"></div>
+        </div>
+        <div class="pf-nisa-frame-stat">使用 <b>{{ nisa.total.usedTxt }}</b> / {{ nisa.total.capTxt }} <span class="pf-nisa-cap">残り <b>{{ nisa.total.remainTxt }}</b></span></div>
+      </div>
+    </div>
+
     <!-- ============ DISCLAIMER ============ -->
     <div class="pf-notes">
       ※ 米国株は現在の為替レート（1ドル=¥{{ rateTxt }}）で円換算しており、評価損益は現在為替ベースのため取得時の表示と若干異なる場合があります。金（ゴールド）は市場スポット価格で評価しています。<br>
@@ -484,6 +515,7 @@ class Component extends DCLogic {
       goldSpotUsd: null,
       goldTime: null,
       holdingsData: null,
+      nisaData: null,
       valHistRemote: null,
       vw: 1200,
     };
@@ -493,6 +525,7 @@ class Component extends DCLogic {
   componentDidMount() {
     // GitHub Pages 等にホスティングした際は data/ 配下のJSONを優先（保有データ・共有履歴）
     fetch('./data/holdings.json').then((r) => r.ok ? r.json() : null).then((d) => { if (d && Array.isArray(d.holdings)) this.setState({ holdingsData: d }); }).catch(() => {});
+    fetch('./data/nisa.json').then((r) => r.ok ? r.json() : null).then((d) => { if (d && Array.isArray(d.entries)) this.setState({ nisaData: d }); }).catch(() => {});
     fetch('./data/history.json').then((r) => r.ok ? r.json() : null).then((d) => { if (Array.isArray(d)) this.setState({ valHistRemote: d }); }).catch(() => {});
     this.fetchRate();
     this.fetchGold();
@@ -530,7 +563,7 @@ class Component extends DCLogic {
       sh: m.sh, sortChips: m.sortChips,
       moversShow: !mobile || this.state.moversOpen, moversCaret: this.state.moversOpen ? '▲' : '▼',
       moversToggle: () => this.setState((s) => ({ moversOpen: !s.moversOpen })),
-      center: m.center, chart: this.buildChart(), mixChart: this.buildMixChart(),
+      center: m.center, chart: this.buildChart(), mixChart: this.buildMixChart(), nisa: this.computeNisa(),
       chartModeIsValue: chartMode !== 'mix',
       chartModeIsMix: chartMode === 'mix',
       modeTabs: [{ label: '評価額', k: 'value' }, { label: '資産構成', k: 'mix' }].map((t) => ({
