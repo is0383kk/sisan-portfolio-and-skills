@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yoshiwoの資産ポートフォリオ</title>
+<meta name="description" content="国内株・米国株・投資信託・金（ゴールド）の資産構成・評価額・評価損益・資産推移を、日次スナップショットで自動更新して可視化する公開ポートフォリオ ダッシュボード。資産配分の推移や評価損益率ランキング、銘柄別の損益も閲覧できます。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="is0383kk">
+<meta property="og:title" content="Yoshiwoの資産ポートフォリオ">
+<meta property="og:description" content="国内株・米国株・投資信託・金の資産構成・評価損益・資産推移を毎日自動更新で可視化する公開ダッシュボード。損益率ランキングも。">
+<meta property="og:url" content="https://is0383kk.github.io/sisan-portfolio-and-skills/">
+<meta property="og:image" content="https://is0383kk.github.io/sisan-portfolio-and-skills/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Yoshiwoの資産ポートフォリオの資産構成ドーナツと区分別割合（国内株・米国株・投資信託・金）">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Yoshiwoの資産ポートフォリオ">
+<meta name="twitter:description" content="国内株・米国株・投資信託・金の資産構成・評価損益・資産推移を毎日自動更新で可視化する公開ダッシュボード。損益率ランキングも。">
+<meta name="twitter:image" content="https://is0383kk.github.io/sisan-portfolio-and-skills/og.png">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+<script>
+// テーマ初期化（FOUC回避）：保存済み設定があれば優先、無ければ OS 設定に追従。
+// styles.css 適用前に <html data-theme> を確定させ、初期描画のちらつきを防ぐ。
+(function () {
+  try {
+    var saved = localStorage.getItem('pf-theme');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = saved || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<script src="./support.js"></script>
+<script src="./js/format.js"></script>
+<script src="./js/data.js"></script>
+<script src="./js/model.js"></script>
+<script src="./js/chart.js"></script>
+</head>
+<body>
+<!-- テーマ切替トグル（x-dc の外＝Reactランタイム管理外に置き、再描画の影響を受けないようにする） -->
+<button id="pf-theme-toggle" class="pf-theme-toggle" type="button" aria-label="テーマ切替" title="ライト / ダーク切替"></button>
+<script>
+// トグルボタンの挙動：クリックで light/dark を反転し localStorage に保存。
+// 手動選択が無い間は OS のカラースキーム変更にも追従する。
+(function () {
+  var btn = document.getElementById('pf-theme-toggle');
+  if (!btn) return;
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+  function current() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+  function apply(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    // アイコンは「切替後に何になるか」ではなく現在の状態を表す（ダーク中は月、ライト中は太陽）
+    btn.textContent = theme === 'dark' ? '☾' : '☀';
+  }
+  apply(current());
+
+  btn.addEventListener('click', function () {
+    var next = current() === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('pf-theme', next); } catch (e) {}
+    apply(next);
+  });
+
+  if (mq && mq.addEventListener) {
+    mq.addEventListener('change', function (e) {
+      var saved;
+      try { saved = localStorage.getItem('pf-theme'); } catch (err) { saved = null; }
+      if (!saved) apply(e.matches ? 'dark' : 'light'); // 手動選択前のみ OS に追従
+    });
+  }
+})();
+</script>
+<x-dc>
+<div class="pf-page">
+  <div class="pf-wrap">
+
+    <!-- ============ HEADER ============ -->
+    <div class="pf-topbar">
+      <div class="pf-brand">
+        <div class="pf-logo">P</div>
+        <div>
+          <div class="pf-brand-label">MY PORTFOLIO</div>
+          <div class="pf-brand-title">{{ owner }}の資産ポートフォリオ</div>
+        </div>
+      </div>
+      <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}">
+      <div class="pf-meta">
+        <div>最終更新 {{ lastUpdateTxt }}</div>
+        <div class="pf-meta-rate">為替 USD/JPY <b class="pf-strong">¥{{ rateTxt }}</b>
+          <span class="pf-meta-badge">
+            <span class="pf-dot" style="background:{{ rateDotColor }};"></span>{{ rateBadge }}
+          </span></div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ mobileView }}" hint-placeholder-val="{{ false }}">
+      <div class="pf-meta-mobile">
+        <span>最終更新 {{ lastUpdateTxt }}</span>
+        <span style="color:var(--pf-divider);">·</span>
+        <span class="pf-muted">USD/JPY <b class="pf-strong">¥{{ rateTxt }}</b></span>
+        <span class="pf-dot-sm" style="background:{{ rateDotColor }};"></span>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ SUMMARY + TREND CHART ============ -->
+    <div class="pf-summary">
+      <div class="pf-summary-head">
+        <div class="pf-summary-left">
+          <div class="pf-total"><span class="pf-total-label">評価額合計</span>{{ totalTxt }}</div>
+          <div class="pf-summary-metrics">
+            <span class="pf-label">評価損益</span> <b style="color:{{ summary.gainColor }};">{{ summary.gainTxt }}</b> <span class="pf-subpct" style="color:{{ summary.gainColor }};">{{ summary.gainPctTxt }}</span>
+          </div>
+        </div>
+        <div class="pf-toggles">
+          <sc-if value="{{ chartModeIsValue }}" hint-placeholder-val="{{ true }}">
+          <div class="pf-toggle-group">
+            <sc-for list="{{ chart.ranges }}" as="rg" hint-placeholder-count="4">
+              <button onClick="{{ rg.onClick }}" class="pf-tbtn pf-tbtn--r" style="background:{{ rg.bg }}; color:{{ rg.color }};">{{ rg.label }}</button>
+            </sc-for>
+          </div>
+          </sc-if>
+          <sc-if value="{{ chartModeIsMix }}" hint-placeholder-val="{{ false }}">
+          <div class="pf-toggle-group">
+            <sc-for list="{{ mixChart.periods }}" as="rg" hint-placeholder-count="2">
+              <button onClick="{{ rg.onClick }}" class="pf-tbtn pf-tbtn--r" style="background:{{ rg.bg }}; color:{{ rg.color }};">{{ rg.label }}</button>
+            </sc-for>
+          </div>
+          </sc-if>
+          <div class="pf-toggle-group">
+            <sc-for list="{{ modeTabs }}" as="mt" hint-placeholder-count="2">
+              <button onClick="{{ mt.onClick }}" class="pf-tbtn pf-tbtn--r" style="background:{{ mt.bg }}; color:{{ mt.color }};">{{ mt.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ chartModeIsValue }}" hint-placeholder-val="{{ true }}">
+      <sc-if value="{{ chart.hasChart }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div class="pf-chart-pos">
+          <svg viewBox="0 0 1000 300" width="100%" preserveAspectRatio="none" class="pf-chart-svg">
+            <defs>
+              <linearGradient id="pfChartArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="{{ chart.accent }}" stop-opacity="0.22"></stop>
+                <stop offset="100%" stop-color="{{ chart.accent }}" stop-opacity="0"></stop>
+              </linearGradient>
+            </defs>
+            <path sc-camel-d="{{ chart.areaPath }}" fill="url(#pfChartArea)"></path>
+            <polyline sc-camel-points="{{ chart.linePts }}" fill="none" stroke="{{ chart.accent }}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+          </svg>
+          <sc-if value="{{ chart.showDots }}" hint-placeholder-val="{{ true }}">
+          <div class="pf-chart-dots">
+            <sc-for list="{{ chart.dots }}" as="dt" hint-placeholder-count="6">
+              <i class="pf-chart-dot" style="left:{{ dt.leftPct }}; top:{{ dt.topPct }}; color:{{ chart.accent }};"></i>
+            </sc-for>
+          </div>
+          </sc-if>
+          <sc-if value="{{ chart.tip }}" hint-placeholder-val="{{ false }}">
+          <i class="pf-chart-dot pf-chart-dot--active" style="left:{{ chart.tip.dotLeftPct }}; top:{{ chart.tip.dotTopPct }}; color:{{ chart.accent }};"></i>
+          <div class="pf-chart-tip" style="left:{{ chart.tip.leftPct }}; top:{{ chart.tip.topPct }}; transform:{{ chart.tip.transform }};">
+            <span class="pf-chart-tip-d">{{ chart.tip.dateTxt }}</span>
+            <b class="pf-chart-tip-v" style="color:{{ chart.tip.valColor }};">{{ chart.tip.valTxt }}</b>
+          </div>
+          </sc-if>
+          <div class="pf-chart-hit" onMouseMove="{{ chart.hit.move }}" onMouseLeave="{{ chart.hit.leave }}" onTouchStart="{{ chart.hit.move }}" onTouchMove="{{ chart.hit.move }}"></div>
+        </div>
+        <div class="pf-chart-xticks">
+          <sc-for list="{{ chart.xticks }}" as="xt" hint-placeholder-count="3">
+            <span>{{ xt.label }}</span>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ chart.emptyMsg }}" hint-placeholder-val="{{ false }}">
+      <div class="pf-empty">{{ chart.emptyMsg }}</div>
+      </sc-if>
+      </sc-if>
+      <sc-if value="{{ chartModeIsMix }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ mixChart.hasBars }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div class="pf-bars-unit">(万円)</div>
+          <div class="pf-bars-wrap" onMouseLeave="{{ mixChart.mixLeave }}">
+            <div class="pf-bars-yaxis">
+              <sc-for list="{{ mixChart.yticks }}" as="yt" hint-placeholder-count="5">
+                <span class="pf-bars-ytick" style="top:{{ yt.topPct }};">{{ yt.label }}</span>
+              </sc-for>
+            </div>
+            <div class="pf-bars-scroll">
+              <div class="pf-bars-track" style="min-width:{{ mixChart.trackMinPx }};">
+                <div class="pf-bars-plot">
+                  <sc-for list="{{ mixChart.yticks }}" as="yt" hint-placeholder-count="5">
+                    <div class="pf-bars-grid" style="top:{{ yt.topPct }};"></div>
+                  </sc-for>
+                  <div class="pf-bar-chart">
+                    <sc-for list="{{ mixChart.bars }}" as="bar" hint-placeholder-count="6">
+                      <div class="pf-bar-col" onMouseEnter="{{ bar.onEnter }}" style="opacity:{{ bar.opacity }};">
+                        <div class="pf-bar-stack" style="height:{{ bar.stackHeightPct }};">
+                          <sc-for list="{{ bar.segs }}" as="seg" hint-placeholder-count="4">
+                            <i class="pf-bar-seg" style="height:{{ seg.heightPct }}; background:{{ seg.color }};"></i>
+                          </sc-for>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ mixChart.tip }}" hint-placeholder-val="{{ false }}">
+                  <div class="pf-bars-tip" style="left:{{ mixChart.tip.leftPct }}; top:6px;">
+                    <div class="pf-bars-tip-d">{{ mixChart.tip.dateTxt }}</div>
+                    <div class="pf-bars-tip-t">{{ mixChart.tip.totalTxt }}</div>
+                    <sc-for list="{{ mixChart.tip.rows }}" as="rw" hint-placeholder-count="4">
+                      <div class="pf-bars-tip-row"><i class="pf-swatch-sm" style="background:{{ rw.color }};"></i><span class="pf-bars-tip-name">{{ rw.name }}</span><span class="pf-bars-tip-v">{{ rw.valTxt }}</span><span class="pf-tright" style="width:42px; color:var(--pf-muted);">{{ rw.pctTxt }}</span></div>
+                    </sc-for>
+                  </div>
+                  </sc-if>
+                </div>
+                <div class="pf-bars-xticks">
+                  <sc-for list="{{ mixChart.bars }}" as="bar" hint-placeholder-count="6">
+                    <span class="pf-bars-xtick">{{ bar.label }}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pf-bars-legend">
+            <sc-for list="{{ mixChart.legend }}" as="lg" hint-placeholder-count="4">
+              <span class="pf-bars-legi"><i class="pf-swatch-sm" style="background:{{ lg.color }};"></i>{{ lg.name }}</span>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ mixChart.emptyMsg }}" hint-placeholder-val="{{ false }}">
+        <div class="pf-empty">{{ mixChart.emptyMsg }}</div>
+        </sc-if>
+      </sc-if>
+      <div class="pf-daymonth">
+        <span class="pf-nowrap"><span class="pf-label">{{ summary.dayLabel }}</span> <b style="color:{{ summary.dayColor }};">{{ summary.dayTxt }}</b> <span class="pf-subpct" style="color:{{ summary.dayColor }};">{{ summary.dayPctTxt }}</span></span>
+        <span style="color:var(--pf-divider); margin:0 6px;">·</span>
+        <span class="pf-nowrap"><span class="pf-label">{{ summary.monthLabel }}</span> <b style="color:{{ summary.monthColor }};">{{ summary.monthTxt }}</b> <span class="pf-subpct" style="color:{{ summary.monthColor }};">{{ summary.monthPctTxt }}</span></span>
+      </div>
+      <sc-if value="{{ chartModeIsValue }}" hint-placeholder-val="{{ true }}">
+      <sc-if value="{{ chart.hasChart }}" hint-placeholder-val="{{ true }}">
+      <div class="pf-period"><span class="pf-label">{{ chart.rangeLabel }}リターン</span> <b style="color:{{ chart.deltaColor }};">{{ chart.deltaTxt }}</b> <span class="pf-subpct" style="color:{{ chart.deltaColor }};">{{ chart.deltaPctTxt }}</span></div>
+      </sc-if>
+      </sc-if>
+      <sc-if value="{{ chart.hasChart }}" hint-placeholder-val="{{ true }}">
+      <div class="pf-hilo">高 <b class="pf-strong2">{{ chart.hiTxt }}</b> <span style="color:var(--pf-divider);">/</span> 安 <b class="pf-strong2">{{ chart.loTxt }}</b> <span style="color:var(--pf-divider); margin:0 5px;">·</span>{{ chart.spanTxt }}</div>
+      </sc-if>
+    </div>
+
+    <!-- ============ MOVERS (損益率ランキング) ============ -->
+    <sc-if value="{{ movers.has }}" hint-placeholder-val="{{ true }}">
+    <div class="pf-movers-wrap">
+      <sc-if value="{{ mobileView }}" hint-placeholder-val="{{ false }}">
+      <button class="pf-movers-toggle" onClick="{{ moversToggle }}">
+        <span>損益率ランキング（ベスト3 / ワースト3）</span>
+        <span class="pf-movers-caret">{{ moversCaret }}</span>
+      </button>
+      </sc-if>
+      <sc-if value="{{ moversShow }}" hint-placeholder-val="{{ true }}">
+      <div class="pf-movers">
+      <div class="pf-movers-col">
+        <div class="pf-movers-head">評価損益率 上位</div>
+        <sc-for list="{{ movers.best }}" as="mv" hint-placeholder-count="3">
+          <div class="pf-mover-row">
+            <i class="pf-swatch-sm" style="background:{{ mv.color }};"></i>
+            <div class="pf-mover-name">{{ mv.name }} <span class="pf-code">{{ mv.code }}</span></div>
+            <div class="pf-mover-pct" style="color:{{ mv.gainColor }};">{{ mv.gainPctTxt }}</div>
+            <div class="pf-mover-gain" style="color:{{ mv.gainColor }};">{{ mv.gainTxt }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div class="pf-movers-col">
+        <div class="pf-movers-head">評価損益率 下位</div>
+        <sc-for list="{{ movers.worst }}" as="mv" hint-placeholder-count="3">
+          <div class="pf-mover-row">
+            <i class="pf-swatch-sm" style="background:{{ mv.color }};"></i>
+            <div class="pf-mover-name">{{ mv.name }} <span class="pf-code">{{ mv.code }}</span></div>
+            <div class="pf-mover-pct" style="color:{{ mv.gainColor }};">{{ mv.gainPctTxt }}</div>
+            <div class="pf-mover-gain" style="color:{{ mv.gainColor }};">{{ mv.gainTxt }}</div>
+          </div>
+        </sc-for>
+      </div>
+      </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ============ DONUT + LEGEND / DRILL-DOWN ============ -->
+    <div>
+      <div class="pf-donut-card">
+        <div class="pf-donut">
+          <svg width="236" height="236" viewBox="0 0 236 236">
+            <g transform="rotate(-90 118 118)">
+              <circle cx="118" cy="118" r="86" fill="none" stroke="var(--pf-donut-ring)" stroke-width="30"></circle>
+              <sc-for list="{{ donut }}" as="seg" hint-placeholder-count="4">
+                <circle cx="118" cy="118" r="86" fill="none" stroke="{{ seg.color }}" stroke-width="30" stroke-dasharray="{{ seg.dash }}" stroke-dashoffset="{{ seg.offset }}" opacity="{{ seg.opacity }}" onMouseEnter="{{ seg.onEnter }}" onMouseLeave="{{ leaveCat }}" onClick="{{ seg.onClick }}" class="pf-donut-seg"></circle>
+              </sc-for>
+            </g>
+            <g class="pf-donut-labels">
+              <sc-for list="{{ donutLabels }}" as="lbl" hint-placeholder-count="4">
+                <text sc-camel-x="{{ lbl.x }}" sc-camel-y="{{ lbl.y }}" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-size="12.5" font-weight="700">{{ lbl.txt }}</text>
+              </sc-for>
+            </g>
+          </svg>
+          <div class="pf-donut-center">
+            <div class="pf-donut-center-label">{{ center.label }}</div>
+            <div class="pf-donut-center-value">{{ center.value }}</div>
+            <div class="pf-donut-center-sub" style="color:{{ center.color }};">{{ center.sub }}</div>
+            <sc-if value="{{ center.sub2 }}" hint-placeholder-val="{{ false }}">
+            <div class="pf-donut-center-sub2" style="color:{{ center.color }};">{{ center.sub2 }}</div>
+            </sc-if>
+          </div>
+        </div>
+        <sc-if value="{{ drillOff }}" hint-placeholder-val="{{ true }}">
+        <div class="pf-legend">
+          <sc-for list="{{ cats }}" as="cat" hint-placeholder-count="4">
+            <div onClick="{{ cat.onClick }}" onMouseEnter="{{ cat.onEnter }}" onMouseLeave="{{ leaveCat }}" class="pf-legend-row" style="grid-template-columns:{{ legendCols }};" style-hover="background:var(--pf-row-hover);">
+              <div class="pf-swatch" style="background:{{ cat.color }};"></div>
+              <div class="pf-min0">
+                <div class="pf-legend-name">{{ cat.name }}</div>
+                <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}"><div class="pf-legend-eval">{{ cat.evalTxt }}</div></sc-if>
+              </div>
+              <sc-if value="{{ mobileView }}" hint-placeholder-val="{{ false }}"><div class="pf-legend-eval-col">{{ cat.evalTxt }}</div></sc-if>
+              <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}">
+              <div class="pf-legend-bar-wrap">
+                <div class="pf-legend-bar-track">
+                  <div class="pf-legend-bar-fill" style="width:{{ cat.barPct }}; background:{{ cat.color }};"></div>
+                </div>
+                <span class="pf-legend-ratio">{{ cat.ratioTxt }}</span>
+              </div>
+              </sc-if>
+              <div class="pf-tright">
+                <sc-if value="{{ mobileView }}" hint-placeholder-val="{{ false }}"><div class="pf-legend-ratio-sm">{{ cat.ratioTxt }}</div></sc-if>
+                <div class="pf-legend-gain" style="color:{{ cat.gainColor }};">{{ cat.gainTxt }}</div>
+                <div class="pf-legend-gainpct" style="color:{{ cat.gainColor }};">{{ cat.gainPctTxt }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+        <sc-if value="{{ drill }}" hint-placeholder-val="{{ false }}">
+        <div class="pf-drillpane">
+          <button onClick="{{ backFn }}" class="pf-back">← 全体に戻る</button>
+          <div class="pf-drill-head">
+            <div class="pf-swatch" style="background:{{ focusObj.color }};"></div>
+            <span class="pf-drill-name">{{ focusObj.name }}</span>
+            <span class="pf-drill-count">{{ focusObj.countTxt }}</span>
+          </div>
+          <div class="pf-drill-eval">{{ focusObj.evalTxt }}</div>
+          <div class="pf-drill-gain" style="color:{{ focusObj.gainColor }};">{{ focusObj.gainTxt }} <span class="pf-op85">{{ focusObj.gainPctTxt }}</span></div>
+          <div class="pf-drill-daymonth">前日比 <span style="color:{{ focusObj.dayColor }}; font-weight:700;">{{ focusObj.dayTxt }}</span> <span style="color:var(--pf-divider);">/</span> 前月比 <span style="color:{{ focusObj.monthColor }}; font-weight:700;">{{ focusObj.monthTxt }}</span></div>
+          <div class="pf-drill-list">
+            <sc-for list="{{ focusObj.holdingsLegend }}" as="hl" hint-placeholder-count="4">
+              <div onMouseEnter="{{ hl.onEnter }}" onMouseLeave="{{ leaveCat }}" class="pf-drill-row" style-hover="background:var(--pf-row-hover);">
+                <div class="pf-swatch-sm" style="background:{{ hl.swatch }};"></div>
+                <div class="pf-drill-rowname">{{ hl.name }} <span class="pf-code">{{ hl.code }}</span></div>
+                <div class="pf-drill-pct">{{ hl.pctTxt }}</div>
+                <div class="pf-drill-eval2">{{ hl.evalTxt }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+
+      <!-- ============ CATEGORY TABLES ============ -->
+      <sc-if value="{{ mobileView }}" hint-placeholder-val="{{ false }}">
+      <div class="pf-msort">
+        <span class="pf-msort-label">並び替え</span>
+        <sc-for list="{{ sortChips }}" as="sc" hint-placeholder-count="4">
+          <button onClick="{{ sc.onClick }}" class="pf-msort-chip" style="background:{{ sc.chipBg }}; border-color:{{ sc.chipBorder }}; color:{{ sc.chipColor }};">{{ sc.label }} <span style="color:{{ sc.chipArwColor }};">{{ sc.arw }}</span></button>
+        </sc-for>
+      </div>
+      </sc-if>
+      <sc-for list="{{ cats }}" as="cat" hint-placeholder-count="4">
+        <div class="pf-cat-card" style="opacity:{{ cat.dimOpacity }};">
+          <div onClick="{{ cat.onClick }}" class="pf-cat-head" style="border-left:4px solid {{ cat.color }};">
+            <div class="pf-cat-title">
+              <span class="pf-cat-name">{{ cat.name }}</span>
+              <span class="pf-cat-count">{{ cat.countTxt }}</span>
+            </div>
+            <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}">
+            <div class="pf-cat-stat" style="width:88px;">構成比<br><b class="pf-cat-stat-ratio">{{ cat.ratioTxt }}</b></div>
+            </sc-if>
+            <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}">
+            <div class="pf-cat-stat" style="width:96px;">前日比<br><b class="pf-cat-stat-num" style="color:{{ cat.dayColor }};">{{ cat.dayTxt }}</b></div>
+            </sc-if>
+            <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}">
+            <div class="pf-cat-stat" style="width:96px;">前月比<br><b class="pf-cat-stat-num" style="color:{{ cat.monthColor }};">{{ cat.monthTxt }}</b></div>
+            </sc-if>
+            <div class="pf-cat-eval">
+              <div class="pf-cat-eval-v">{{ cat.evalTxt }}</div>
+              <div class="pf-cat-eval-gain" style="color:{{ cat.gainColor }};">{{ cat.gainTxt }}</div>
+            </div>
+          </div>
+          <sc-if value="{{ cat.isOpen }}" hint-placeholder-val="{{ true }}">
+            <div class="pf-cat-body">
+              <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}">
+              <div class="pf-htable-head">
+                <div class="pf-th" onClick="{{ sh.name.onClick }}">銘柄 / ティッカー <span class="pf-th-arw" style="color:{{ sh.name.arwColor }};">{{ sh.name.arw }}</span></div>
+                <div class="pf-th pf-th--r" onClick="{{ sh.price.onClick }}">現在値 <span class="pf-th-arw" style="color:{{ sh.price.arwColor }};">{{ sh.price.arw }}</span></div>
+                <div class="pf-th pf-th--r" onClick="{{ sh.day.onClick }}">前日比 <span class="pf-th-arw" style="color:{{ sh.day.arwColor }};">{{ sh.day.arw }}</span></div>
+                <div class="pf-th pf-th--r" onClick="{{ sh.month.onClick }}">前月比 <span class="pf-th-arw" style="color:{{ sh.month.arwColor }};">{{ sh.month.arw }}</span></div>
+                <div class="pf-th pf-th--r" onClick="{{ sh.eval.onClick }}">評価額 <span class="pf-th-arw" style="color:{{ sh.eval.arwColor }};">{{ sh.eval.arw }}</span></div>
+                <div class="pf-th pf-th--r" onClick="{{ sh.gain.onClick }}">評価損益 <span class="pf-th-arw" style="color:{{ sh.gain.arwColor }};">{{ sh.gain.arw }}</span></div>
+              </div>
+              <sc-for list="{{ cat.holdings }}" as="h" hint-placeholder-count="3">
+                <div class="pf-htable-row" style-hover="background:var(--pf-row-hover-2);">
+                  <div class="pf-min0">
+                    <div class="pf-h-name">{{ h.name }}</div>
+                    <div class="pf-h-sub">{{ h.code }} ・ {{ h.qtyTxt }}</div>
+                  </div>
+                  <div class="pf-num">{{ h.priceTxt }}</div>
+                  <div class="pf-num" style="color:{{ h.dayColor }};">{{ h.dayTxt }}</div>
+                  <div class="pf-num" style="color:{{ h.monthColor }};">{{ h.monthTxt }}</div>
+                  <div class="pf-num">{{ h.evalTxt }}</div>
+                  <div class="pf-tright">
+                    <div class="pf-h-gain" style="color:{{ h.gainColor }};">{{ h.gainTxt }}</div>
+                    <div class="pf-h-gainpct" style="color:{{ h.gainColor }};">{{ h.gainPctTxt }}</div>
+                  </div>
+                </div>
+              </sc-for>
+              </sc-if>
+              <sc-if value="{{ mobileView }}" hint-placeholder-val="{{ false }}">
+              <sc-for list="{{ cat.holdings }}" as="h" hint-placeholder-count="3">
+                <div class="pf-hrow-m">
+                  <div class="pf-hrow-m-top">
+                    <div class="pf-hrow-m-name">{{ h.name }} <span class="pf-code">{{ h.code }}</span></div>
+                    <div class="pf-hrow-m-eval">{{ h.evalTxt }}</div>
+                  </div>
+                  <div class="pf-hrow-m-sub">
+                    <div>{{ h.priceTxt }} <span style="color:var(--pf-divider);">·</span> 日 <span style="color:{{ h.dayColor }}; font-weight:700;">{{ h.dayTxt }}</span> <span style="color:var(--pf-divider);">·</span> 月 <span style="color:{{ h.monthColor }}; font-weight:700;">{{ h.monthTxt }}</span></div>
+                    <div class="pf-hrow-m-gain" style="color:{{ h.gainColor }};">{{ h.gainTxt }} <span style="font-weight:600; opacity:.8;">{{ h.gainPctTxt }}</span></div>
+                  </div>
+                </div>
+              </sc-for>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- ============ DISCLAIMER ============ -->
+    <div class="pf-notes">
+      ※ 米国株は現在の為替レート（1ドル=¥{{ rateTxt }}）で円換算しており、評価損益は現在為替ベースのため取得時の表示と若干異なる場合があります。金（ゴールド）は市場スポット価格で評価しています。<br>
+      ※ 前日比・前月比は履歴が貯まるまでは試算値（「試算」表示）で、日数が経つと実測値へ自動で切り替わります。
+    </div>
+
+    <!-- ============ FOOTER / CREDIT ============ -->
+    <div class="pf-credit">© 2026 <a href="https://is0383kk.github.io/personal/profile/" target="_blank" rel="noopener noreferrer" class="pf-credit-link">@is0383kk</a></div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;ownerName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Yoshiwo&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;usdRate&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:160.83,&quot;min&quot;:100,&quot;max&quot;:200,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;},&quot;goldPrice&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:21920,&quot;min&quot;:10000,&quot;max&quot;:40000,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;},&quot;goldPrevClose&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:22000,&quot;min&quot;:0,&quot;max&quot;:40000,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;},&quot;goldMonthAgo&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:20900,&quot;min&quot;:0,&quot;max&quot;:40000,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;},&quot;gainStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;jp&quot;,&quot;us&quot;],&quot;default&quot;:&quot;jp&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      focusCat: null,
+      hoverCat: null,
+      chartRange: 365,
+      chartHover: null,
+      chartMode: 'value',
+      chartMixPeriod: 'month',
+      sortKey: 'eval',
+      sortDir: 'desc',
+      moversOpen: false,
+      mixHover: null,
+      liveRate: null,
+      rateTime: null,
+      rateStatus: 'idle',
+      goldSpotUsd: null,
+      goldTime: null,
+      holdingsData: null,
+      valHistRemote: null,
+      vw: 1200,
+    };
+    this.leaveCat = () => this.setState({ hoverCat: null });
+  }
+
+  componentDidMount() {
+    // GitHub Pages 等にホスティングした際は data/ 配下のJSONを優先（保有データ・共有履歴）
+    fetch('./data/holdings.json').then((r) => r.ok ? r.json() : null).then((d) => { if (d && Array.isArray(d.holdings)) this.setState({ holdingsData: d }); }).catch(() => {});
+    fetch('./data/history.json').then((r) => r.ok ? r.json() : null).then((d) => { if (Array.isArray(d)) this.setState({ valHistRemote: d }); }).catch(() => {});
+    this.fetchRate();
+    this.fetchGold();
+    this.captureValue();
+    this.rateTimer = setInterval(() => { this.fetchRate(); this.fetchGold(); }, 300000); // 5分ごと
+    this.onResize = () => { const w = window.innerWidth; if (w !== this.state.vw) this.setState({ vw: w }); };
+    this.onResize();
+    window.addEventListener('resize', this.onResize);
+  }
+  componentWillUnmount() {
+    if (this.rateTimer) clearInterval(this.rateTimer);
+    if (this.onResize) window.removeEventListener('resize', this.onResize);
+  }
+  componentDidUpdate() {
+    this.captureValue();
+    // 資産構成（積み上げ棒）の表示・期間を切り替えた時だけ、最新（右端）が見えるよう横スクロールを末尾へ。
+    // ホバー等の通常更新ではスクロール位置を動かさない。
+    const barsKey = (this.state.chartMode || 'value') + '|' + (this.state.chartMixPeriod || 'year');
+    if (barsKey !== this._barsKey) {
+      this._barsKey = barsKey;
+      const el = document.querySelector('.pf-bars-scroll');
+      if (el) el.scrollLeft = el.scrollWidth;
+    }
+  }
+
+  renderVals() {
+    const m = this.computeModel();
+    const mobile = this.state.vw < 680;
+    const chartMode = this.state.chartMode || 'value';
+
+    return {
+      cats: m.cats, donut: m.donut, donutLabels: m.donutLabels, focusObj: m.focusObj,
+      drill: m.drill, drillOff: !m.drill, backFn: () => this.setState({ focusCat: null, hoverCat: null }),
+      totalTxt: m.totalTxt, summary: m.summary, movers: m.movers,
+      sh: m.sh, sortChips: m.sortChips,
+      moversShow: !mobile || this.state.moversOpen, moversCaret: this.state.moversOpen ? '▲' : '▼',
+      moversToggle: () => this.setState((s) => ({ moversOpen: !s.moversOpen })),
+      center: m.center, chart: this.buildChart(), mixChart: this.buildMixChart(),
+      chartModeIsValue: chartMode !== 'mix',
+      chartModeIsMix: chartMode === 'mix',
+      modeTabs: [{ label: '評価額', k: 'value' }, { label: '資産構成', k: 'mix' }].map((t) => ({
+        label: t.label, onClick: () => this.setState({ chartMode: t.k }),
+        bg: chartMode === t.k ? 'var(--pf-toggle-active)' : 'transparent',
+        color: chartMode === t.k ? 'var(--pf-on-accent)' : 'var(--pf-text-2)',
+      })),
+      mobileView: mobile, desktopView: !mobile,
+      legendCols: !mobile ? '14px 108px minmax(0,1fr) 110px' : '13px minmax(0,1fr) 76px 100px',
+      leaveCat: this.leaveCat,
+      owner: (this.props && this.props.ownerName) || 'Yoshiwo',
+      lastUpdateTxt: (() => { const vh = this.readValHist(); const d = (vh && vh.length) ? vh[vh.length - 1].d : null; return d ? String(d).replace(/-/g, '/') : '—'; })(),
+      rateTxt: m.RATE.toFixed(2),
+      rateDotColor: this.state.rateStatus === 'live' ? '#2e9e6e' : (this.state.rateStatus === 'loading' ? '#e0b256' : 'var(--pf-faint)'),
+      rateBadge: this.state.rateStatus === 'live'
+        ? ('自動更新 ' + (this.state.rateTime ? (('0' + this.state.rateTime.getHours()).slice(-2) + ':' + ('0' + this.state.rateTime.getMinutes()).slice(-2)) : ''))
+        : (this.state.rateStatus === 'loading' ? '取得中…' : '手動レート'),
+      goldTxt: Math.round(m.GOLD).toLocaleString('en-US'),
+      goldBadge: this.state.goldSpotUsd
+        ? ('自動更新 ' + (this.state.goldTime ? (('0' + this.state.goldTime.getHours()).slice(-2) + ':' + ('0' + this.state.goldTime.getMinutes()).slice(-2)) : ''))
+        : '手動価格',
+    };
+  }
+}
+
+Object.assign(Component.prototype, window.PortfolioLogic);
+</script>
+</body>
+</html>
