@@ -14,7 +14,8 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
   },
   colorsSet() {
     // up/down（損益の赤緑）はデータ可視化色のためテーマ非依存。neu（変化なし）は背景に応じて切替（var）。
-    const jp = { up: '#d75049', down: '#1f8a5b', neu: 'var(--pf-muted)' };
+    // プラス=緑 / マイナス=赤（米国式）で表示する。
+    const jp = { up: '#1f8a5b', down: '#d75049', neu: 'var(--pf-muted)' };
     const us = { up: '#2e9e6e', down: '#d75049', neu: 'var(--pf-muted)' };
     return (this.props && this.props.gainStyle === 'us') ? us : jp;
   },
