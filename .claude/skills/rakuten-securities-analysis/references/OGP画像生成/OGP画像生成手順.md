@@ -19,8 +19,7 @@
 
 ## 前提（依存）
 
-- Python に **Pillow** が必要。`scripts/requirements.txt` にまとめてあるので次で導入する:
-  `py -m pip install -r "{SKILL_DIR}/scripts/requirements.txt"`
+- Python に **Pillow** が必要。`scripts/requirements.txt` にまとめてあるので次で導入する:`py -m pip install -r "{SKILL_DIR}/scripts/requirements.txt"`
 - フォントは Windows 標準同梱の游ゴシック（`C:/Windows/Fonts/YuGothB.ttc` / `YuGothR.ttc`）を使う。
 
 ## 使い方（基本）
