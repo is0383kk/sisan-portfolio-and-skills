@@ -243,6 +243,22 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 .pf-hrow-m-sub { display: flex; justify-content: space-between; gap: 10px; margin-top: 4px; font-size: 12px; color: var(--pf-text-3); }
 .pf-hrow-m-gain { white-space: nowrap; font-weight: 700; }
 
+/* ===== NISA 非課税枠（生涯） ===== */
+.pf-nisa-card { background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: 16px; box-shadow: 0 1px 3px var(--pf-shadow); padding: clamp(14px,3.5vw,20px) clamp(16px,4vw,24px); margin-bottom: 12px; }
+.pf-nisa-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.pf-nisa-title { font-weight: 800; font-size: 15px; }
+.pf-nisa-sub { font-size: 11px; color: var(--pf-muted); font-weight: 600; }
+.pf-nisa-frame { margin-bottom: 14px; }
+.pf-nisa-frame-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 5px; }
+.pf-nisa-frame-name { display: flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; }
+.pf-nisa-frame-pct { font-weight: 800; font-size: 14px; color: var(--pf-text-2); }
+.pf-nisa-track { display: flex; height: 12px; border-radius: 6px; background: var(--pf-track); overflow: hidden; }
+.pf-nisa-fill { height: 100%; }
+.pf-nisa-frame-stat { margin-top: 5px; font-size: 12px; color: var(--pf-text-3); }
+.pf-nisa-frame-stat b { color: var(--pf-text); font-weight: 700; }
+.pf-nisa-cap { color: var(--pf-muted); }
+.pf-nisa-total { margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--pf-border); }
+
 /* ===== FOOTER / CREDIT ===== */
 .pf-notes { margin-top: 18px; font-size: 11px; color: var(--pf-muted); line-height: 1.8; }
 .pf-credit { margin-top: 14px; background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: 16px; box-shadow: 0 1px 3px var(--pf-shadow); padding: 16px; text-align: center; font-size: 12px; color: var(--pf-muted); }

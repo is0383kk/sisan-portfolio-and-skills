@@ -260,4 +260,46 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
   },
 
   toggleFocus(key) { this.setState((s) => ({ focusCat: s.focusCat === key ? null : key })); },
+
+  // 新NISA 非課税枠（生涯）の使用状況。簿価(cost)ベースで枠ごとに集計し、テンプレートへ供給する。
+  // frame: tsumitate=NISAつみたて投資枠 / growth=NISA成長投資枠。旧「つみたてNISA」は対象外（nisa.json に含めない）。
+  // 生涯非課税限度額1800万のうち成長投資枠は1200万まで。つみたて投資枠は「総枠の残り」までフルに使える点に注意。
+  computeNisa() {
+    const NISA = (this.state.nisaData && Array.isArray(this.state.nisaData.entries))
+      ? this.state.nisaData : this.defaultNisa();
+    const lim = NISA.limits || { total: 18000000, growth: 12000000, tsumitate: 6000000 };
+    const sumBy = (frame) => NISA.entries.filter((e) => e.frame === frame).reduce((s, e) => s + (e.cost || 0), 0);
+    const tsumitateUsed = sumBy('tsumitate');
+    const growthUsed = sumBy('growth');
+    const totalUsed = tsumitateUsed + growthUsed;
+
+    const TS_BLUE = '#5b9bd5', GR_PURPLE = '#9b8cd4';
+    // 各枠バーの上限：成長1200万・つみたて600万（合計=生涯枠1800万）の固定枠で運用する。
+    const tsumitateCap = lim.tsumitate || 6000000;
+    const mkBar = (label, used, cap, color) => {
+      const remain = Math.max(cap - used, 0);
+      const pct = cap > 0 ? used / cap : 0;
+      return {
+        label, color,
+        usedTxt: this.yenMan(used), remainTxt: this.yenMan(remain), capTxt: this.yenMan(cap),
+        pctTxt: (pct * 100).toFixed(1) + '%', barPct: (Math.min(pct, 1) * 100).toFixed(1) + '%',
+      };
+    };
+
+    const totalRemain = Math.max(lim.total - totalUsed, 0);
+    const totalPct = lim.total > 0 ? totalUsed / lim.total : 0;
+    return {
+      bars: [
+        mkBar('つみたて投資枠', tsumitateUsed, tsumitateCap, TS_BLUE),
+        mkBar('成長投資枠', growthUsed, lim.growth, GR_PURPLE),
+      ],
+      total: {
+        usedTxt: this.yenMan(totalUsed), remainTxt: this.yenMan(totalRemain), capTxt: this.yenMan(lim.total),
+        pctTxt: (totalPct * 100).toFixed(1) + '%', barPct: (Math.min(totalPct, 1) * 100).toFixed(1) + '%',
+        tsumitateColor: TS_BLUE, growthColor: GR_PURPLE,
+        tsumitateW: (lim.total > 0 ? Math.min(tsumitateUsed / lim.total, 1) * 100 : 0).toFixed(2) + '%',
+        growthW: (lim.total > 0 ? Math.min(growthUsed / lim.total, 1) * 100 : 0).toFixed(2) + '%',
+      },
+    };
+  },
 });

@@ -78,4 +78,26 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       ]
     };
   },
+
+  // ---------- 内蔵デフォルト NISA データ（data/nisa.json が無い時の代替） ----------
+  defaultNisa() {
+    // === 新NISAの非課税枠（生涯）使用状況。cost=取得価額(簿価)[円]=時価評価額-評価損益（楽天証券レポート基準）。 ===
+    // frame: tsumitate=NISAつみたて投資枠 / growth=NISA成長投資枠。旧「つみたてNISA」は対象外。
+    return {
+      "limits": { "total": 18000000, "growth": 12000000, "tsumitate": 6000000 },
+      "entries": [
+        { "frame": "tsumitate", "name": "eMAXIS Slim 米国株式(S&P500)", "cost": 1782001 },
+        { "frame": "tsumitate", "name": "eMAXIS Slim 全世界株式(オール・カントリー)", "cost": 1781400 },
+        { "frame": "growth", "name": "任天堂", "cost": 88510 },
+        { "frame": "growth", "name": "エヌビディア", "cost": 356890 },
+        { "frame": "growth", "name": "マイクロン テクノロジー", "cost": 287388 },
+        { "frame": "growth", "name": "IonQ", "cost": 165648 },
+        { "frame": "growth", "name": "クレド・テクノロジー", "cost": 106560 },
+        { "frame": "growth", "name": "楽天・プラス・NASDAQ-100インデックス", "cost": 300000 },
+        { "frame": "growth", "name": "eMAXIS Slim 米国株式(S&P500)", "cost": 3135100 },
+        { "frame": "growth", "name": "eMAXIS Slim 全世界株式(オール・カントリー)", "cost": 1002000 },
+        { "frame": "growth", "name": "iFreeNEXT FANG+インデックス", "cost": 30000 }
+      ]
+    };
+  },
 });
