@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Yoshiwoの資産ポートフォリオ</title>
+<title>資産ポートフォリオサンプル</title>
 <meta name="description" content="国内株・米国株・投資信託・金（ゴールド）の資産構成・評価額・評価損益・資産推移を、日次スナップショットで自動更新して可視化する公開ポートフォリオ ダッシュボード。資産配分の推移や評価損益率ランキング、銘柄別の損益も閲覧できます。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="is0383kk">
-<meta property="og:title" content="Yoshiwoの資産ポートフォリオ">
+<meta property="og:title" content="資産ポートフォリオサンプル">
 <meta property="og:description" content="国内株・米国株・投資信託・金の資産構成・評価損益・資産推移を毎日自動更新で可視化する公開ダッシュボード。損益率ランキングも。">
 <meta property="og:url" content="https://is0383kk.github.io/sisan-portfolio-and-skills/">
 <meta property="og:image" content="https://is0383kk.github.io/sisan-portfolio-and-skills/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Yoshiwoの資産ポートフォリオの資産構成ドーナツと区分別割合（国内株・米国株・投資信託・金）">
+<meta property="og:image:alt" content="資産ポートフォリオサンプルの資産構成ドーナツと区分別割合（国内株・米国株・投資信託・金）">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Yoshiwoの資産ポートフォリオ">
+<meta name="twitter:title" content="資産ポートフォリオサンプル">
 <meta name="twitter:description" content="国内株・米国株・投資信託・金の資産構成・評価損益・資産推移を毎日自動更新で可視化する公開ダッシュボード。損益率ランキングも。">
 <meta name="twitter:image" content="https://is0383kk.github.io/sisan-portfolio-and-skills/og.png">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
@@ -91,7 +91,7 @@
         <div class="pf-logo">P</div>
         <div>
           <div class="pf-brand-label">MY PORTFOLIO</div>
-          <div class="pf-brand-title">{{ owner }}の資産ポートフォリオ</div>
+          <div class="pf-brand-title">資産ポートフォリオサンプル</div>
         </div>
       </div>
       <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}">
@@ -171,6 +171,9 @@
           <div class="pf-chart-tip" style="left:{{ chart.tip.leftPct }}; top:{{ chart.tip.topPct }}; transform:{{ chart.tip.transform }};">
             <span class="pf-chart-tip-d">{{ chart.tip.dateTxt }}</span>
             <b class="pf-chart-tip-v" style="color:{{ chart.tip.valColor }};">{{ chart.tip.valTxt }}</b>
+            <sc-if value="{{ chart.tip.momTxt }}" hint-placeholder-val="{{ false }}">
+            <span class="pf-chart-tip-m" style="color:{{ chart.tip.momColor }};">{{ chart.tip.momTxt }}</span>
+            </sc-if>
           </div>
           </sc-if>
           <div class="pf-chart-hit" onMouseMove="{{ chart.hit.move }}" onMouseLeave="{{ chart.hit.leave }}" onTouchStart="{{ chart.hit.move }}" onTouchMove="{{ chart.hit.move }}"></div>
@@ -217,6 +220,9 @@
                   <div class="pf-bars-tip" style="left:{{ mixChart.tip.leftPct }}; top:6px;">
                     <div class="pf-bars-tip-d">{{ mixChart.tip.dateTxt }}</div>
                     <div class="pf-bars-tip-t">{{ mixChart.tip.totalTxt }}</div>
+                    <sc-if value="{{ mixChart.tip.momTxt }}" hint-placeholder-val="{{ false }}">
+                    <div class="pf-bars-tip-m" style="color:{{ mixChart.tip.momColor }};">{{ mixChart.tip.momTxt }}</div>
+                    </sc-if>
                     <sc-for list="{{ mixChart.tip.rows }}" as="rw" hint-placeholder-count="4">
                       <div class="pf-bars-tip-row"><i class="pf-swatch-sm" style="background:{{ rw.color }};"></i><span class="pf-bars-tip-name">{{ rw.name }}</span><span class="pf-bars-tip-v">{{ rw.valTxt }}</span><span class="pf-tright" style="width:42px; color:var(--pf-muted);">{{ rw.pctTxt }}</span></div>
                     </sc-for>

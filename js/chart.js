@@ -58,6 +58,9 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       const s = series[hv], v = valOf(s), t = String(s.d).split('-');
       const below = pts[hv].y < 95; // 上端に近い点は下側へ出す
       const topPct = (pts[hv].y / 3).toFixed(2) + '%';
+      // 前月（1つ前の月次点）比。差分を「+¥〇〇」で表示。先頭点は前月が無いので出さない。
+      const prevV = hv > 0 ? valOf(series[hv - 1]) : null;
+      const mom = prevV != null ? v - prevV : null;
       tip = {
         dotLeftPct: (pts[hv].x / 10).toFixed(2) + '%',
         dotTopPct: topPct,
@@ -67,6 +70,8 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
         dateTxt: (+t[0]) + '/' + (+t[1]) + '/' + (+t[2]),
         valTxt: this.yen(v),
         valColor: 'var(--pf-text)',
+        momTxt: mom != null ? '前月比 ' + this.signYen(mom) : null,
+        momColor: mom != null ? this.col(mom) : null,
       };
     }
 
@@ -179,10 +184,16 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
         cpx = hi > lo ? Math.min(Math.max(cpx, lo), hi) : trackW / 2;
         leftPct = (cpx / trackW * 100).toFixed(2) + '%';
       }
+      // 1つ前の期間（月次なら前月／年次なら前年）比。差分を「+¥〇〇」で表示。先頭は前期間が無いので出さない。
+      const prevTot = hv > 0 ? totals[hv - 1] : null;
+      const mom = prevTot != null ? totals[hv] - prevTot : null;
+      const momLabel = period === 'year' ? '前年比' : '前月比';
       tip = {
         leftPct,
         dateTxt: period === 'year' ? (t[0] + '年') : (t[0] + '/' + (+t[1])),
         totalTxt: this.yen(totals[hv]),
+        momTxt: mom != null ? momLabel + ' ' + this.signYen(mom) : null,
+        momColor: mom != null ? this.col(mom) : null,
         rows: CATS.map((c) => ({ name: c.name, color: c.color, valTxt: this.yen(s.cats[c.key] || 0), pctTxt: this.ratioPct(totals[hv] ? (s.cats[c.key] || 0) / totals[hv] : 0) })),
       };
     }
