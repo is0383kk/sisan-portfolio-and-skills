@@ -78,6 +78,11 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 .pf-theme-toggle { position: fixed; top: 14px; right: 14px; z-index: 1000; width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--pf-border); background: var(--pf-surface); box-shadow: 0 1px 3px var(--pf-shadow); color: var(--pf-text); font-size: 17px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease; }
 .pf-theme-toggle:hover { box-shadow: 0 2px 8px var(--pf-shadow-2); }
 
+/* ===== SCROLL TO TOP （x-dc の外に置く固定ボタン。一定量スクロールで表示） ===== */
+.pf-totop { position: fixed; bottom: 20px; right: 14px; z-index: 1000; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--pf-border); background: var(--pf-surface); box-shadow: 0 1px 3px var(--pf-shadow); color: var(--pf-text); font-size: 19px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, opacity .2s ease, visibility .2s ease, transform .2s ease; opacity: 0; visibility: hidden; transform: translateY(8px); }
+.pf-totop.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
+.pf-totop:hover { box-shadow: 0 2px 8px var(--pf-shadow-2); }
+
 /* ===== shared utilities ===== */
 .pf-label { color: var(--pf-muted); font-weight: 600; }   /* グレーの小見出しラベル */
 .pf-strong { color: var(--pf-text); }                      /* 強調（濃色） */
@@ -260,6 +265,103 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 .pf-nisa-frame-stat b { color: var(--pf-text); font-weight: 700; }
 .pf-nisa-cap { color: var(--pf-muted); }
 .pf-nisa-total { margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--pf-border); }
+
+/* ===== 分析パネル（1カードにまとめ・アコーディオン） ===== */
+.pf-analysis { background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: 16px; box-shadow: 0 1px 3px var(--pf-shadow); padding: clamp(14px,3.5vw,20px) clamp(16px,4vw,24px); margin-bottom: 12px; }
+.pf-analysis-head { font-weight: 800; font-size: 15px; margin: 0 0 6px; }
+.pf-panel-item { border-top: 1px solid var(--pf-border); }
+.pf-panel-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: transparent; border: none; padding: 14px 0; font-family: inherit; cursor: pointer; text-align: left; }
+.pf-panel-titles { display: flex; flex-direction: column; gap: 2px; }
+.pf-panel-title { font-weight: 800; font-size: 14px; color: var(--pf-text); }
+.pf-panel-sub { font-size: 11px; color: var(--pf-muted); font-weight: 600; }
+.pf-panel-body { padding: 2px 0 16px; }
+
+/* ===== 分析 / 暴落耐性分析 ===== */
+.pf-crash-now { font-size: 12px; color: var(--pf-text-3); margin-bottom: 8px; }
+.pf-crash-now b { color: var(--pf-text); font-weight: 800; font-size: 14px; }
+.pf-crash-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 20px; padding: 12px 14px; margin-bottom: 16px; background: var(--pf-row-hover, rgba(127,127,127,0.06)); border: 1px solid var(--pf-border); border-radius: 12px; }
+.pf-crash-ctrl-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.pf-crash-ctrl-label { font-size: 11px; font-weight: 700; color: var(--pf-text-3); margin-right: 2px; }
+.pf-crash-ctrl-field { display: inline-flex; align-items: center; gap: 4px; }
+.pf-crash-ctrl-name { font-size: 11px; font-weight: 600; color: var(--pf-text-3); }
+.pf-crash-ctrl-sign { font-size: 12px; color: var(--pf-muted); font-weight: 700; }
+.pf-crash-ctrl-unit { font-size: 11px; color: var(--pf-muted); }
+.pf-crash-input { width: 56px; padding: 4px 6px; font-family: inherit; font-size: 13px; font-weight: 700; text-align: right; color: var(--pf-text); background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: 8px; }
+.pf-crash-input:focus { outline: none; border-color: var(--pf-accent); }
+.pf-crash-reset { margin-left: auto; align-self: center; padding: 6px 12px; font-family: inherit; font-size: 11px; font-weight: 700; color: var(--pf-text-3); background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: 8px; cursor: pointer; }
+.pf-crash-reset:hover { color: var(--pf-text); border-color: var(--pf-accent); }
+.pf-crash-model { margin-top: 16px; }
+.pf-crash-model-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.pf-crash-model-label { font-weight: 800; font-size: 14px; }
+.pf-crash-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.pf-crash-scn { border: 1px solid var(--pf-border); border-radius: 12px; padding: 12px 14px; background: var(--pf-surface); }
+.pf-crash-scn-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.pf-crash-scn-drop { font-weight: 800; font-size: 16px; color: var(--pf-text); }
+.pf-crash-scn-turn { font-size: 10px; font-weight: 700; }
+.pf-crash-after { font-weight: 800; font-size: 17px; letter-spacing: -0.02em; }
+.pf-crash-delta { font-size: 11px; color: var(--pf-text-3); margin-top: 3px; }
+.pf-crash-delta .pf-subpct { color: var(--pf-muted); margin-left: 3px; }
+.pf-crash-gain { font-size: 11px; color: var(--pf-text-3); margin-top: 2px; }
+.pf-crash-track { height: 6px; border-radius: 3px; background: var(--pf-track); overflow: hidden; margin: 8px 0; }
+.pf-crash-fill { height: 100%; background: var(--pf-down, #d75049); }
+.pf-crash-cats { border-top: 1px solid var(--pf-border); padding-top: 7px; }
+.pf-crash-cat-row { display: grid; grid-template-columns: 13px minmax(0,1fr) auto; align-items: center; gap: 6px; font-size: 11px; color: var(--pf-text-3); padding: 1px 0; }
+.pf-crash-cat-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-crash-cat-drop { color: var(--pf-muted); text-align: right; }
+.pf-crash-note { margin-top: 14px; font-size: 11px; color: var(--pf-muted); line-height: 1.7; }
+
+/* ===== 分析 / 将来シミュレーション ===== */
+.pf-crash-input--wide { width: 96px; }
+.pf-future-summary { margin-bottom: 16px; }
+.pf-future-final { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.pf-future-final-label { font-size: 12px; color: var(--pf-text-3); font-weight: 700; }
+.pf-future-final-val { font-weight: 800; font-size: clamp(22px,6vw,30px); letter-spacing: -0.02em; }
+.pf-future-breakdown { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--pf-text-3); margin-top: 6px; }
+.pf-future-bd-item b { color: var(--pf-text); font-weight: 700; }
+.pf-future-bd-item .pf-subpct { margin-left: 3px; }
+.pf-future-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--pf-track); margin-top: 10px; }
+.pf-future-bar-contrib { height: 100%; background: #5b9bd5; }
+.pf-future-bar-profit { height: 100%; background: #5cc4a3; }
+.pf-future-legend { display: flex; gap: 16px; font-size: 11px; color: var(--pf-text-3); margin-top: 8px; }
+.pf-future-legi { display: inline-flex; align-items: center; gap: 6px; }
+.pf-future-sw-contrib { background: #5b9bd5; }
+.pf-future-sw-profit { background: #5cc4a3; }
+.pf-future-modes { margin-bottom: 12px; }
+.pf-future-note-ok { font-size: 11px; color: var(--pf-muted); margin-top: 6px; }
+
+/* ===== 分析 / リバランス提案 ===== */
+.pf-rebal-head, .pf-rebal-row { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr) 78px minmax(0,1.4fr); gap: 10px; align-items: center; }
+.pf-rebal-head { font-size: 10px; font-weight: 700; color: var(--pf-muted); padding: 4px 0; border-bottom: 1px solid var(--pf-border); }
+.pf-rebal-row { padding: 9px 0; border-bottom: 1px solid var(--pf-border); }
+.pf-rebal-c-name { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; }
+.pf-rebal-c-cur, .pf-rebal-c-act { display: flex; flex-direction: column; gap: 1px; }
+.pf-rebal-c-act { text-align: right; }
+.pf-rebal-pct { font-weight: 700; font-size: 13px; }
+.pf-rebal-diff { font-weight: 800; font-size: 14px; }
+.pf-rebal-sub { font-size: 10px; color: var(--pf-muted); }
+.pf-rebal-c-tgt { text-align: center; }
+.pf-rebal-reset { margin-top: 12px; }
+
+/* ===== 分析 / ドローダウン・変動性 ===== */
+.pf-dd-stats { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 16px; }
+.pf-dd-stat { display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--pf-border); border-radius: 12px; padding: 12px 14px; }
+.pf-dd-label { font-size: 11px; color: var(--pf-text-3); font-weight: 700; }
+.pf-dd-val { font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
+.pf-dd-neg { color: var(--pf-down, #d75049); }
+.pf-dd-sub { font-size: 10px; color: var(--pf-muted); }
+.pf-dd-chart-label { font-size: 11px; font-weight: 700; color: var(--pf-text-3); margin-bottom: 6px; }
+
+@media (max-width: 680px) {
+  .pf-crash-grid { grid-template-columns: 1fr; }
+  .pf-dd-stats { grid-template-columns: 1fr; }
+  .pf-rebal-head { display: none; }
+  /* モバイルは 2列×2段：1段目=区分名／目標入力、2段目=現在／必要売買 */
+  .pf-rebal-row { grid-template-columns: minmax(0,1fr) 72px; row-gap: 6px; }
+  .pf-rebal-c-name { grid-row: 1; grid-column: 1; }
+  .pf-rebal-c-tgt { grid-row: 1; grid-column: 2; }
+  .pf-rebal-c-cur { grid-row: 2; grid-column: 1; }
+  .pf-rebal-c-act { grid-row: 2; grid-column: 2; }
+}
 
 /* ===== FOOTER / CREDIT ===== */
 .pf-notes { margin-top: 18px; font-size: 11px; color: var(--pf-muted); line-height: 1.8; }

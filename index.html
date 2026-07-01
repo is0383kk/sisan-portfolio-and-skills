@@ -81,6 +81,28 @@
   }
 })();
 </script>
+<!-- トップへ戻るボタン（x-dc の外＝Reactランタイム管理外に置き、再描画の影響を受けないようにする） -->
+<button id="pf-totop" class="pf-totop" type="button" aria-label="ページ上部へ戻る" title="上へ戻る">↑</button>
+<script>
+// 一定量スクロールしたら表示し、クリックでページ上部へスムーズスクロールする。
+(function () {
+  var btn = document.getElementById('pf-totop');
+  if (!btn) return;
+  var THRESHOLD = 320; // これ以上スクロールしたら表示
+
+  function update() {
+    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+    if (y > THRESHOLD) btn.classList.add('is-visible');
+    else btn.classList.remove('is-visible');
+  }
+  update();
+
+  window.addEventListener('scroll', update, { passive: true });
+  btn.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+</script>
 <x-dc>
 <div class="pf-page">
   <div class="pf-wrap">
@@ -88,7 +110,6 @@
     <!-- ============ HEADER ============ -->
     <div class="pf-topbar">
       <div class="pf-brand">
-        <div class="pf-logo">P</div>
         <div>
           <div class="pf-brand-label">MY PORTFOLIO</div>
           <div class="pf-brand-title">資産ポートフォリオサンプル</div>
@@ -481,6 +502,300 @@
       </div>
     </div>
 
+    <!-- ============ 分析 / シミュレーション（アコーディオン：同時に1つだけ展開・デフォルト閉じ） ============ -->
+    <!-- 分析機能を増やす場合は model.js の buildAnalysisPanels() に定義を足し、ここに対応する本文 sc-if を追加する。 -->
+    <div class="pf-analysis">
+      <div class="pf-analysis-head">分析 / シミュレーション</div>
+      <sc-for list="{{ analysisPanels }}" as="ap" hint-placeholder-count="2">
+      <div class="pf-panel-item">
+        <button class="pf-panel-toggle" onClick="{{ ap.onClick }}">
+          <span class="pf-panel-titles">
+            <span class="pf-panel-title">{{ ap.title }}</span>
+            <span class="pf-panel-sub">{{ ap.sub }}</span>
+          </span>
+          <span class="pf-movers-caret">{{ ap.caret }}</span>
+        </button>
+
+        <sc-if value="{{ ap.isOpen }}" hint-placeholder-val="{{ false }}">
+        <div class="pf-panel-body">
+
+          <!-- ---- 暴落耐性分析 ---- -->
+          <sc-if value="{{ ap.isCrash }}" hint-placeholder-val="{{ true }}">
+          <div class="pf-crash-now">
+            現在の評価額 <b>{{ crash.currentTotalTxt }}</b>
+            <span class="pf-nisa-cap">／ 評価損益 <b style="color:{{ crash.currentGainColor }};">{{ crash.currentGainTxt }}</b></span>
+          </div>
+          <div class="pf-crash-controls">
+            <div class="pf-crash-ctrl-group">
+              <span class="pf-crash-ctrl-label">下落シナリオ (%)</span>
+              <sc-for list="{{ crash.dropInputs }}" as="di" hint-placeholder-count="3">
+                <span class="pf-crash-ctrl-field">
+                  <span class="pf-crash-ctrl-sign">-</span>
+                  <input class="pf-crash-input" type="number" min="0" max="100" step="1" value="{{ di.value }}" onInput="{{ di.onInput }}">
+                  <span class="pf-crash-ctrl-unit">%</span>
+                </span>
+              </sc-for>
+            </div>
+            <div class="pf-crash-ctrl-group">
+              <span class="pf-crash-ctrl-label">区分別感応度 (β)</span>
+              <sc-for list="{{ crash.betaInputs }}" as="bi" hint-placeholder-count="3">
+                <span class="pf-crash-ctrl-field">
+                  <i class="pf-swatch-sm" style="background:{{ bi.color }};"></i>
+                  <span class="pf-crash-ctrl-name">{{ bi.name }}</span>
+                  <span class="pf-crash-ctrl-sign">×</span>
+                  <input class="pf-crash-input" type="number" min="0" max="5" step="0.05" value="{{ bi.value }}" onInput="{{ bi.onInput }}">
+                </span>
+              </sc-for>
+            </div>
+            <button class="pf-crash-reset" onClick="{{ crash.resetFn }}">デフォルトに戻す</button>
+          </div>
+
+          <sc-for list="{{ crash.models }}" as="md" hint-placeholder-count="2">
+          <div class="pf-crash-model">
+            <div class="pf-crash-model-head">
+              <span class="pf-crash-model-label">{{ md.label }}</span>
+              <span class="pf-nisa-sub">{{ md.desc }}</span>
+            </div>
+            <div class="pf-crash-grid">
+              <sc-for list="{{ md.scenarios }}" as="sc" hint-placeholder-count="3">
+              <div class="pf-crash-scn">
+                <div class="pf-crash-scn-head">
+                  <span class="pf-crash-scn-drop">-{{ sc.dropTxt }}</span>
+                  <span class="pf-crash-scn-turn" style="color:{{ sc.turnsLossColor }};">{{ sc.turnsLossTxt }}</span>
+                </div>
+                <div class="pf-crash-after">{{ sc.afterTotalTxt }}</div>
+                <div class="pf-crash-delta">下落額 <b style="color:{{ sc.turnsLossColor }};">{{ sc.dropYenTxt }}</b> <span class="pf-subpct">{{ sc.dropPctTxt }}</span></div>
+                <div class="pf-crash-gain">下落後損益 <b style="color:{{ sc.afterGainColor }};">{{ sc.afterGainTxt }}</b></div>
+                <div class="pf-crash-track">
+                  <div class="pf-crash-fill" style="width:{{ sc.barPct }};"></div>
+                </div>
+                <div class="pf-crash-cats">
+                  <sc-for list="{{ sc.cats }}" as="cr" hint-placeholder-count="3">
+                    <div class="pf-crash-cat-row">
+                      <i class="pf-swatch-sm" style="background:{{ cr.color }};"></i>
+                      <span class="pf-crash-cat-name">{{ cr.name }}</span>
+                      <span class="pf-crash-cat-drop">{{ cr.dropYenTxt }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              </sc-for>
+            </div>
+          </div>
+          </sc-for>
+          <div class="pf-crash-note">
+            ※ 一律は全資産に下落率をそのまま適用した単純試算、区分別感応度は各区分のβを乗じた試算です。将来の下落幅を保証するものではありません。
+          </div>
+          </sc-if>
+
+          <!-- ---- 将来シミュレーション分析 ---- -->
+          <sc-if value="{{ ap.isFuture }}" hint-placeholder-val="{{ false }}">
+          <div class="pf-toggle-group pf-future-modes">
+            <sc-for list="{{ future.modeTabs }}" as="mt" hint-placeholder-count="2">
+              <button onClick="{{ mt.onClick }}" class="pf-tbtn pf-tbtn--r" style="background:{{ mt.bg }}; color:{{ mt.color }};">{{ mt.label }}</button>
+            </sc-for>
+          </div>
+          <div class="pf-crash-controls">
+            <div class="pf-crash-ctrl-group">
+              <span class="pf-crash-ctrl-label">初期元本</span>
+              <span class="pf-crash-ctrl-field">
+                <span class="pf-crash-ctrl-sign">¥</span>
+                <input class="pf-crash-input pf-crash-input--wide" type="number" min="0" step="10000" value="{{ future.initInput.value }}" onInput="{{ future.initInput.onInput }}">
+              </span>
+            </div>
+            <sc-if value="{{ future.isForward }}" hint-placeholder-val="{{ true }}">
+            <div class="pf-crash-ctrl-group">
+              <span class="pf-crash-ctrl-label">毎月積立</span>
+              <span class="pf-crash-ctrl-field">
+                <span class="pf-crash-ctrl-sign">¥</span>
+                <input class="pf-crash-input pf-crash-input--wide" type="number" min="0" step="1000" value="{{ future.monthlyInput.value }}" onInput="{{ future.monthlyInput.onInput }}">
+              </span>
+            </div>
+            </sc-if>
+            <sc-if value="{{ future.isReverse }}" hint-placeholder-val="{{ false }}">
+            <div class="pf-crash-ctrl-group">
+              <span class="pf-crash-ctrl-label">目標金額</span>
+              <span class="pf-crash-ctrl-field">
+                <span class="pf-crash-ctrl-sign">¥</span>
+                <input class="pf-crash-input pf-crash-input--wide" type="number" min="0" step="100000" value="{{ future.targetInput.value }}" onInput="{{ future.targetInput.onInput }}">
+              </span>
+            </div>
+            </sc-if>
+            <div class="pf-crash-ctrl-group">
+              <span class="pf-crash-ctrl-label">想定年率</span>
+              <span class="pf-crash-ctrl-field">
+                <input class="pf-crash-input" type="number" min="0" max="30" step="0.5" value="{{ future.rateInput.value }}" onInput="{{ future.rateInput.onInput }}">
+                <span class="pf-crash-ctrl-unit">%</span>
+              </span>
+            </div>
+            <div class="pf-crash-ctrl-group">
+              <span class="pf-crash-ctrl-label">期間</span>
+              <span class="pf-crash-ctrl-field">
+                <input class="pf-crash-input" type="number" min="1" max="60" step="1" value="{{ future.yearsInput.value }}" onInput="{{ future.yearsInput.onInput }}">
+                <span class="pf-crash-ctrl-unit">年</span>
+              </span>
+            </div>
+            <button class="pf-crash-reset" onClick="{{ future.resetFn }}">デフォルトに戻す</button>
+          </div>
+
+          <div class="pf-future-summary">
+            <sc-if value="{{ future.isReverse }}" hint-placeholder-val="{{ false }}">
+            <div class="pf-future-final">
+              <span class="pf-future-final-label">目標 {{ future.targetTxt }} に必要な毎月積立</span>
+              <span class="pf-future-final-val">{{ future.monthlyOutTxt }}</span>
+            </div>
+            <sc-if value="{{ future.reachableNote }}" hint-placeholder-val="{{ false }}">
+            <div class="pf-future-note-ok">{{ future.reachableNote }}</div>
+            </sc-if>
+            </sc-if>
+            <sc-if value="{{ future.isForward }}" hint-placeholder-val="{{ true }}">
+            <div class="pf-future-final">
+              <span class="pf-future-final-label">{{ future.yearsTxt }}の予想評価額</span>
+              <span class="pf-future-final-val">{{ future.finalTxt }}</span>
+            </div>
+            </sc-if>
+            <div class="pf-future-breakdown">
+              <span class="pf-future-bd-item">投下元本 <b>{{ future.contributedTxt }}</b></span>
+              <span class="pf-future-bd-item">運用収益 <b style="color:{{ future.profitColor }};">{{ future.profitTxt }}</b> <span class="pf-subpct" style="color:{{ future.profitColor }};">{{ future.profitPctTxt }}</span></span>
+            </div>
+            <div class="pf-future-bar">
+              <div class="pf-future-bar-contrib" style="width:{{ future.contribW }};"></div>
+              <div class="pf-future-bar-profit" style="width:{{ future.profitW }};"></div>
+            </div>
+            <div class="pf-future-legend">
+              <span class="pf-future-legi"><i class="pf-swatch-sm pf-future-sw-contrib"></i>投下元本</span>
+              <span class="pf-future-legi"><i class="pf-swatch-sm pf-future-sw-profit"></i>運用収益</span>
+            </div>
+          </div>
+
+          <sc-if value="{{ future.chart.hasChart }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <svg viewBox="0 0 1000 300" width="100%" preserveAspectRatio="none" class="pf-chart-svg">
+              <defs>
+                <linearGradient id="pfFutureArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="{{ future.chart.accent }}" stop-opacity="0.22"></stop>
+                  <stop offset="100%" stop-color="{{ future.chart.accent }}" stop-opacity="0"></stop>
+                </linearGradient>
+              </defs>
+              <path sc-camel-d="{{ future.chart.areaPath }}" fill="url(#pfFutureArea)"></path>
+              <polyline sc-camel-points="{{ future.chart.linePts }}" fill="none" stroke="{{ future.chart.accent }}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+            </svg>
+            <div class="pf-chart-xticks">
+              <sc-for list="{{ future.chart.xticks }}" as="xt" hint-placeholder-count="3">
+                <span>{{ xt.label }}</span>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+          <div class="pf-crash-note">
+            ※ 月利＝年率÷12 の毎月複利で、税・手数料・為替・インフレは考慮しない試算です。逆算は目標金額から必要な毎月積立額を求めます。将来の運用成果を保証するものではありません。
+          </div>
+          </sc-if>
+
+          <!-- ---- リバランス提案分析 ---- -->
+          <sc-if value="{{ ap.isRebal }}" hint-placeholder-val="{{ false }}">
+          <div class="pf-crash-now">
+            評価額合計 <b>{{ rebal.totalTxt }}</b>
+            <span class="pf-nisa-cap">／ 目標配分の合計 <b>{{ rebal.sumTxt }}</b></span>
+          </div>
+          <div class="pf-rebal-head">
+            <span class="pf-rebal-c-name">区分</span>
+            <span class="pf-rebal-c-cur">現在</span>
+            <span class="pf-rebal-c-tgt">目標(%)</span>
+            <span class="pf-rebal-c-act">必要な売買</span>
+          </div>
+          <sc-for list="{{ rebal.rows }}" as="rb" hint-placeholder-count="3">
+          <div class="pf-rebal-row">
+            <span class="pf-rebal-c-name"><i class="pf-swatch-sm" style="background:{{ rb.color }};"></i>{{ rb.name }}</span>
+            <span class="pf-rebal-c-cur">
+              <span class="pf-rebal-pct">{{ rb.curPctTxt }}</span>
+              <span class="pf-rebal-sub">{{ rb.curEvalTxt }}</span>
+            </span>
+            <span class="pf-rebal-c-tgt">
+              <input class="pf-crash-input" type="number" min="0" max="100" step="1" value="{{ rb.targetInput.value }}" onInput="{{ rb.targetInput.onInput }}">
+            </span>
+            <span class="pf-rebal-c-act">
+              <span class="pf-rebal-diff" style="color:{{ rb.diffColor }};">{{ rb.diffTxt }}</span>
+              <span class="pf-rebal-sub">{{ rb.actionTxt }} ・ 目標 {{ rb.targetEvalTxt }}</span>
+            </span>
+          </div>
+          </sc-for>
+          <button class="pf-crash-reset pf-rebal-reset" onClick="{{ rebal.resetFn }}">現在の配分に戻す</button>
+          <sc-if value="{{ rebal.normalized }}" hint-placeholder-val="{{ false }}">
+          <div class="pf-crash-note">※ 目標配分の合計が100%でないため、入力比を正規化して評価額へ按分しています。売買額の合計は総額維持のため相殺されゼロになります。</div>
+          </sc-if>
+          <div class="pf-crash-note">※ 売買額は現在の総額を維持したまま目標配分へ寄せる試算です。売却・買い増しの順序や税・手数料は考慮しません。</div>
+          </sc-if>
+
+          <!-- ---- ドローダウン / 変動性分析 ---- -->
+          <sc-if value="{{ ap.isDrawdown }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ drawdown.hasData }}" hint-placeholder-val="{{ true }}">
+          <div class="pf-dd-stats">
+            <div class="pf-dd-stat">
+              <span class="pf-dd-label">最大ドローダウン</span>
+              <span class="pf-dd-val pf-dd-neg">{{ drawdown.maxDDTxt }}</span>
+              <span class="pf-dd-sub">{{ drawdown.maxDDRangeTxt }}</span>
+            </div>
+            <div class="pf-dd-stat">
+              <span class="pf-dd-label">現在の下落幅（最高値比）</span>
+              <span class="pf-dd-val" style="color:{{ drawdown.curDDColor }};">{{ drawdown.curDDTxt }}</span>
+              <span class="pf-dd-sub">直近評価額と過去最高値の差</span>
+            </div>
+            <div class="pf-dd-stat">
+              <span class="pf-dd-label">年率ボラティリティ</span>
+              <span class="pf-dd-val">{{ drawdown.volTxt }}</span>
+              <span class="pf-dd-sub">月次 {{ drawdown.volMonthTxt }} ×√12</span>
+            </div>
+            <div class="pf-dd-stat">
+              <span class="pf-dd-label">月次リターン 平均</span>
+              <span class="pf-dd-val">{{ drawdown.avgRetTxt }}</span>
+              <span class="pf-dd-sub">最良 {{ drawdown.bestTxt }} / 最悪 {{ drawdown.worstTxt }}</span>
+            </div>
+          </div>
+          <div class="pf-dd-chart-label">アンダーウォーター（最高値からの下落率推移）</div>
+          <sc-if value="{{ drawdown.hasChart }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div class="pf-chart-pos">
+              <svg viewBox="0 0 1000 300" width="100%" preserveAspectRatio="none" class="pf-chart-svg">
+                <defs>
+                  <linearGradient id="pfDdArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="{{ drawdown.accent }}" stop-opacity="0.06"></stop>
+                    <stop offset="100%" stop-color="{{ drawdown.accent }}" stop-opacity="0.24"></stop>
+                  </linearGradient>
+                </defs>
+                <path sc-camel-d="{{ drawdown.areaPath }}" fill="url(#pfDdArea)"></path>
+                <polyline sc-camel-points="{{ drawdown.linePts }}" fill="none" stroke="{{ drawdown.accent }}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+              </svg>
+              <sc-if value="{{ drawdown.tip }}" hint-placeholder-val="{{ false }}">
+              <i class="pf-chart-dot pf-chart-dot--active" style="left:{{ drawdown.tip.dotLeftPct }}; top:{{ drawdown.tip.dotTopPct }}; color:{{ drawdown.accent }};"></i>
+              <div class="pf-chart-tip" style="left:{{ drawdown.tip.leftPct }}; top:{{ drawdown.tip.topPct }}; transform:{{ drawdown.tip.transform }};">
+                <span class="pf-chart-tip-d">{{ drawdown.tip.dateTxt }}</span>
+                <b class="pf-chart-tip-v" style="color:{{ drawdown.tip.valColor }};">{{ drawdown.tip.valTxt }}</b>
+                <span class="pf-chart-tip-m" style="color:{{ drawdown.tip.momColor }};">{{ drawdown.tip.momTxt }}</span>
+              </div>
+              </sc-if>
+              <div class="pf-chart-hit" onMouseMove="{{ drawdown.hit.move }}" onMouseLeave="{{ drawdown.hit.leave }}" onTouchStart="{{ drawdown.hit.move }}" onTouchMove="{{ drawdown.hit.move }}"></div>
+            </div>
+            <div class="pf-chart-xticks">
+              <sc-for list="{{ drawdown.xticks }}" as="xt" hint-placeholder-count="3">
+                <span>{{ xt.label }}</span>
+              </sc-for>
+            </div>
+          </div>
+          </sc-if>
+          <div class="pf-crash-note">※ 各月の最新の評価額から算出した実測値です（{{ drawdown.pointsTxt }}）。履歴が増えるほど精度が上がります。暴落耐性分析（想定）と対の実測指標です。</div>
+          </sc-if>
+          <sc-if value="{{ drawdown.emptyMsg }}" hint-placeholder-val="{{ false }}">
+          <div class="pf-empty">{{ drawdown.emptyMsg }}</div>
+          </sc-if>
+          </sc-if>
+
+        </div>
+        </sc-if>
+      </div>
+      </sc-for>
+    </div>
+
     <!-- ============ DISCLAIMER ============ -->
     <div class="pf-notes">
       ※ 米国株は現在の為替レート（1ドル=¥{{ rateTxt }}）で円換算しており、評価損益は現在為替ベースのため取得時の表示と若干異なる場合があります。金（ゴールド）は市場スポット価格で評価しています。<br>
@@ -504,7 +819,18 @@ class Component extends DCLogic {
       sortKey: 'eval',
       sortDir: 'desc',
       moversOpen: false,
+      openPanels: {}, // 分析パネルの開閉状態。キー(crash/future/rebalance/drawdown)ごとに true=展開。複数同時展開可。
+      crashDrops: [10, 20, 30], // 暴落耐性分析(A/B共通)の下落シナリオ(%)。編集可・グラフへ即反映。
+      crashBetas: { jp: 1.0, us: 1.15, fund: 0.85 }, // 暴落耐性分析(B)の区分別感応度β。編集可・グラフへ即反映。
+      futureMode: 'forward', // 将来シミュレーション：'forward'(積立→将来額) / 'reverse'(目標→必要積立)。
+      futureRate: 5, // 将来シミュレーション：想定年率(%)。編集可・グラフへ即反映。
+      futureMonthly: 30000, // 将来シミュレーション：毎月積立額(円)。
+      futureYears: 20, // 将来シミュレーション：積立期間(年)。
+      futureInit: null, // 将来シミュレーション：初期元本(円)。null のとき現在評価額合計を既定使用。
+      futureTarget: 50000000, // 将来シミュレーション（逆算）：目標金額(円)。
+      rebalTargets: null, // リバランス：区分別の目標配分(%)。null のとき現在配分を既定（ズレゼロ）。
       mixHover: null,
+      ddHover: null, // アンダーウォーター図（ドローダウン/変動性分析）のホバー中データ点インデックス。
       liveRate: null,
       rateTime: null,
       rateStatus: 'idle',
@@ -560,6 +886,9 @@ class Component extends DCLogic {
       moversShow: !mobile || this.state.moversOpen, moversCaret: this.state.moversOpen ? '▲' : '▼',
       moversToggle: () => this.setState((s) => ({ moversOpen: !s.moversOpen })),
       center: m.center, chart: this.buildChart(), mixChart: this.buildMixChart(), nisa: this.computeNisa(),
+      analysisPanels: this.buildAnalysisPanels(m),
+      crash: this.computeCrashTest(m), future: this.computeFuture(m),
+      rebal: this.computeRebalance(m), drawdown: this.computeDrawdown(),
       chartModeIsValue: chartMode !== 'mix',
       chartModeIsMix: chartMode === 'mix',
       modeTabs: [{ label: '評価額', k: 'value' }, { label: '資産構成', k: 'mix' }].map((t) => ({
