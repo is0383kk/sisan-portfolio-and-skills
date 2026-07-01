@@ -60,21 +60,21 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
 
   // ---------- 内蔵デフォルト保有データ（data/holdings.json が無い時の代替） ----------
   defaultConfig() {
-    // === 楽天証券 資産状況(2026/06時点)を反映。data/holdings.json が読めない場合のフォールバック ===
+    // === 楽天証券 資産状況(2026/07時点)を反映。data/holdings.json が読めない場合のフォールバック ===
     return {
-      "usdRateFallback": 161.77,
+      "usdRateFallback": 162.69,
       "holdings": [
-        { "cat": "jp", "name": "任天堂", "code": "7974", "cur": "JPY", "unit": "株", "shares": 10, "avg": 8851, "price": 7000, "dayAbs": -76, "monthAbs": -148 },
-        { "cat": "us", "name": "エヌビディア", "code": "NVDA", "cur": "USD", "unit": "株", "shares": 20, "avg": 117.115, "price": 210.69, "dayAbs": 0, "monthAbs": -0.45 },
-        { "cat": "us", "name": "マイクロン テクノロジー", "code": "MU", "cur": "USD", "unit": "株", "shares": 5, "avg": 362.75, "price": 1133.99, "dayAbs": 0, "monthAbs": 162.99 },
-        { "cat": "us", "name": "IonQ", "code": "IONQ", "cur": "USD", "unit": "株", "shares": 30, "avg": 35, "price": 56.55, "dayAbs": 0, "monthAbs": -15.52 },
-        { "cat": "us", "name": "クレド・テクノロジー", "code": "CRDO", "cur": "USD", "unit": "株", "shares": 4, "avg": 165.92, "price": 271.83, "dayAbs": 0, "monthAbs": 35.80 },
-        { "cat": "fund", "name": "eMAXIS Slim 米国株式(S&P500)", "code": "S&P500", "cur": "JPY", "unit": "口", "per": 10000, "shares": 1670403, "avg": 31232.59, "price": 44418, "dayAbs": 575, "monthAbs": 158 },
-        { "cat": "fund", "name": "eMAXIS Slim 全世界株式(オール・カントリー)", "code": "オルカン", "cur": "JPY", "unit": "口", "per": 10000, "shares": 994683, "avg": 27982.79, "price": 38217, "dayAbs": 310, "monthAbs": 480 },
-        { "cat": "fund", "name": "楽天・資産づくりファンド(なかなかコース)", "code": "らくらく", "cur": "JPY", "unit": "口", "per": 10000, "shares": 306463, "avg": 9789.11, "price": 14011, "dayAbs": 76, "monthAbs": 42 },
-        { "cat": "fund", "name": "楽天・プラス・NASDAQ-100インデックス", "code": "楽天NASDAQ100", "cur": "JPY", "unit": "口", "per": 10000, "shares": 158445, "avg": 18934.01, "price": 19677, "dayAbs": 518, "monthAbs": null },
-        { "cat": "fund", "name": "iFreeNEXT FANG+インデックス", "code": "FANG+", "cur": "JPY", "unit": "口", "per": 10000, "shares": 5848, "avg": 51299.59, "price": 95656, "dayAbs": 2975, "monthAbs": -1264 },
-        { "cat": "fund", "name": "楽天・資産づくりファンド(じっくりコース)", "code": "らくらく", "cur": "JPY", "unit": "口", "per": 10000, "shares": 32024, "avg": 9367.97, "price": 12258, "dayAbs": 54, "monthAbs": 27 }
+        { "cat": "jp", "name": "任天堂", "code": "7974", "cur": "JPY", "unit": "株", "shares": 10, "avg": 8851, "price": 6980, "monthAbs": -20 },
+        { "cat": "us", "name": "エヌビディア", "code": "NVDA", "cur": "USD", "unit": "株", "shares": 20, "avg": 117.115, "price": 200.09, "monthAbs": -10.6 },
+        { "cat": "us", "name": "マイクロン テクノロジー", "code": "MU", "cur": "USD", "unit": "株", "shares": 5, "avg": 362.75, "price": 1154.29, "monthAbs": 20.3 },
+        { "cat": "us", "name": "IonQ", "code": "IONQ", "cur": "USD", "unit": "株", "shares": 30, "avg": 35, "price": 53.26, "monthAbs": -3.29 },
+        { "cat": "us", "name": "クレド・テクノロジー", "code": "CRDO", "cur": "USD", "unit": "株", "shares": 4, "avg": 165.92, "price": 271.95, "monthAbs": 0.12 },
+        { "cat": "fund", "name": "eMAXIS Slim 米国株式(S&P500)", "code": "S&P500", "cur": "JPY", "unit": "口", "per": 10000, "shares": 1670403, "avg": 31232.59, "price": 44399, "monthAbs": -19 },
+        { "cat": "fund", "name": "eMAXIS Slim 全世界株式(オール・カントリー)", "code": "オルカン", "cur": "JPY", "unit": "口", "per": 10000, "shares": 994683, "avg": 27982.79, "price": 38017, "monthAbs": -200 },
+        { "cat": "fund", "name": "楽天・資産づくりファンド(なかなかコース)", "code": "らくらく", "cur": "JPY", "unit": "口", "per": 10000, "shares": 306463, "avg": 9789.11, "price": 14016, "monthAbs": 5 },
+        { "cat": "fund", "name": "楽天・プラス・NASDAQ-100インデックス", "code": "楽天NASDAQ100", "cur": "JPY", "unit": "口", "per": 10000, "shares": 158445, "avg": 18934.01, "price": 19414, "monthAbs": -263 },
+        { "cat": "fund", "name": "iFreeNEXT FANG+インデックス", "code": "FANG+", "cur": "JPY", "unit": "口", "per": 10000, "shares": 5848, "avg": 51299.59, "price": 91888, "monthAbs": -3768 },
+        { "cat": "fund", "name": "楽天・資産づくりファンド(じっくりコース)", "code": "らくらく", "cur": "JPY", "unit": "口", "per": 10000, "shares": 32024, "avg": 9367.97, "price": 12273, "monthAbs": 15 }
       ]
     };
   },

@@ -243,8 +243,6 @@
         </sc-if>
       </sc-if>
       <div class="pf-daymonth">
-        <span class="pf-nowrap"><span class="pf-label">{{ summary.dayLabel }}</span> <b style="color:{{ summary.dayColor }};">{{ summary.dayTxt }}</b> <span class="pf-subpct" style="color:{{ summary.dayColor }};">{{ summary.dayPctTxt }}</span></span>
-        <span style="color:var(--pf-divider); margin:0 6px;">·</span>
         <span class="pf-nowrap"><span class="pf-label">{{ summary.monthLabel }}</span> <b style="color:{{ summary.monthColor }};">{{ summary.monthTxt }}</b> <span class="pf-subpct" style="color:{{ summary.monthColor }};">{{ summary.monthPctTxt }}</span></span>
       </div>
       <sc-if value="{{ chartModeIsValue }}" hint-placeholder-val="{{ true }}">
@@ -358,7 +356,7 @@
           </div>
           <div class="pf-drill-eval">{{ focusObj.evalTxt }}</div>
           <div class="pf-drill-gain" style="color:{{ focusObj.gainColor }};">{{ focusObj.gainTxt }} <span class="pf-op85">{{ focusObj.gainPctTxt }}</span></div>
-          <div class="pf-drill-daymonth">前日比 <span style="color:{{ focusObj.dayColor }}; font-weight:700;">{{ focusObj.dayTxt }}</span> <span style="color:var(--pf-divider);">/</span> 前月比 <span style="color:{{ focusObj.monthColor }}; font-weight:700;">{{ focusObj.monthTxt }}</span></div>
+          <div class="pf-drill-daymonth">前月比 <span style="color:{{ focusObj.monthColor }}; font-weight:700;">{{ focusObj.monthTxt }}</span></div>
           <div class="pf-drill-list">
             <sc-for list="{{ focusObj.holdingsLegend }}" as="hl" hint-placeholder-count="4">
               <div onMouseEnter="{{ hl.onEnter }}" onMouseLeave="{{ leaveCat }}" class="pf-drill-row" style-hover="background:var(--pf-row-hover);">
@@ -393,9 +391,6 @@
             <div class="pf-cat-stat" style="width:88px;">構成比<br><b class="pf-cat-stat-ratio">{{ cat.ratioTxt }}</b></div>
             </sc-if>
             <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}">
-            <div class="pf-cat-stat" style="width:96px;">前日比<br><b class="pf-cat-stat-num" style="color:{{ cat.dayColor }};">{{ cat.dayTxt }}</b></div>
-            </sc-if>
-            <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}">
             <div class="pf-cat-stat" style="width:96px;">前月比<br><b class="pf-cat-stat-num" style="color:{{ cat.monthColor }};">{{ cat.monthTxt }}</b></div>
             </sc-if>
             <div class="pf-cat-eval">
@@ -409,7 +404,6 @@
               <div class="pf-htable-head">
                 <div class="pf-th" onClick="{{ sh.name.onClick }}">銘柄 / ティッカー <span class="pf-th-arw" style="color:{{ sh.name.arwColor }};">{{ sh.name.arw }}</span></div>
                 <div class="pf-th pf-th--r" onClick="{{ sh.price.onClick }}">現在値 <span class="pf-th-arw" style="color:{{ sh.price.arwColor }};">{{ sh.price.arw }}</span></div>
-                <div class="pf-th pf-th--r" onClick="{{ sh.day.onClick }}">前日比 <span class="pf-th-arw" style="color:{{ sh.day.arwColor }};">{{ sh.day.arw }}</span></div>
                 <div class="pf-th pf-th--r" onClick="{{ sh.month.onClick }}">前月比 <span class="pf-th-arw" style="color:{{ sh.month.arwColor }};">{{ sh.month.arw }}</span></div>
                 <div class="pf-th pf-th--r" onClick="{{ sh.eval.onClick }}">評価額 <span class="pf-th-arw" style="color:{{ sh.eval.arwColor }};">{{ sh.eval.arw }}</span></div>
                 <div class="pf-th pf-th--r" onClick="{{ sh.gain.onClick }}">評価損益 <span class="pf-th-arw" style="color:{{ sh.gain.arwColor }};">{{ sh.gain.arw }}</span></div>
@@ -421,7 +415,6 @@
                     <div class="pf-h-sub">{{ h.code }} ・ {{ h.qtyTxt }}</div>
                   </div>
                   <div class="pf-num">{{ h.priceTxt }}</div>
-                  <div class="pf-num" style="color:{{ h.dayColor }};">{{ h.dayTxt }}</div>
                   <div class="pf-num" style="color:{{ h.monthColor }};">{{ h.monthTxt }}</div>
                   <div class="pf-num">{{ h.evalTxt }}</div>
                   <div class="pf-tright">
@@ -439,7 +432,7 @@
                     <div class="pf-hrow-m-eval">{{ h.evalTxt }}</div>
                   </div>
                   <div class="pf-hrow-m-sub">
-                    <div>{{ h.priceTxt }} <span style="color:var(--pf-divider);">·</span> 日 <span style="color:{{ h.dayColor }}; font-weight:700;">{{ h.dayTxt }}</span> <span style="color:var(--pf-divider);">·</span> 月 <span style="color:{{ h.monthColor }}; font-weight:700;">{{ h.monthTxt }}</span></div>
+                    <div>{{ h.priceTxt }} <span style="color:var(--pf-divider);">·</span> 月 <span style="color:{{ h.monthColor }}; font-weight:700;">{{ h.monthTxt }}</span></div>
                     <div class="pf-hrow-m-gain" style="color:{{ h.gainColor }};">{{ h.gainTxt }} <span style="font-weight:600; opacity:.8;">{{ h.gainPctTxt }}</span></div>
                   </div>
                 </div>
@@ -485,7 +478,7 @@
     <!-- ============ DISCLAIMER ============ -->
     <div class="pf-notes">
       ※ 米国株は現在の為替レート（1ドル=¥{{ rateTxt }}）で円換算しており、評価損益は現在為替ベースのため取得時の表示と若干異なる場合があります。金（ゴールド）は市場スポット価格で評価しています。<br>
-      ※ 前日比・前月比は履歴が貯まるまでは試算値（「試算」表示）で、日数が経つと実測値へ自動で切り替わります。
+      ※ 前月比は履歴が貯まるまでは試算値（「試算」表示）で、日数が経つと実測値へ自動で切り替わります。
     </div>
 
   </div>

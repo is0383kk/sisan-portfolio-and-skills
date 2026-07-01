@@ -19,7 +19,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
     const RATE = this.state.liveRate || (this.props && this.props.usdRate) || CFG.usdRateFallback || 160.83;
     const GOLD = 0; // 金（ゴールド）は現在保有なし
     const CATS = this.categories();
-    const CATMONTH = { jp: -1480 }; // 国内株はポートフォリオ単位の前月比(実データ：6月70,000-5月71,480)
+    const CATMONTH = { jp: 1650 }; // 国内株はポートフォリオ単位の前月比(実データ：7月69,800-6月68,150)
 
     const enrich = (h) => {
       const per = h.per || 1;
@@ -28,24 +28,19 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       const costJPY = h.avg == null ? null : h.shares * h.avg / per * rate;
       const gain = costJPY == null ? null : evalJPY - costJPY;
       const gainPct = (costJPY == null || costJPY === 0) ? null : gain / costJPY * 100;
-      const dayPct = h.dayAbs == null ? null : h.dayAbs / (h.price - h.dayAbs) * 100;
       const monthPct = h.monthAbs == null ? null : h.monthAbs / (h.price - h.monthAbs) * 100;
-      const dayYen = h.dayAbs == null ? null : h.dayAbs * h.shares / per * rate;
       const monthYen = h.monthAbs == null ? null : h.monthAbs * h.shares / per * rate;
       return Object.assign({}, h, {
-        evalJPY, costJPY, gain, gainPct, dayPct, monthPct, dayYen, monthYen,
+        evalJPY, costJPY, gain, gainPct, monthPct, monthYen,
         priceTxt: this.priceFmt(h),
         qtyTxt: this.qtyFmt(h),
         evalTxt: this.yen(evalJPY),
         gainTxt: gain == null ? '—' : this.signYen(gain),
         gainPctTxt: gainPct == null ? '取得原価なし' : this.pct(gainPct),
         gainColor: this.col(gain),
-        dayTxt: dayPct == null ? '—' : this.pct(dayPct),
-        dayColor: this.col(dayPct),
         monthTxt: monthPct == null ? '—' : this.pct(monthPct),
         monthColor: this.col(monthPct),
         sortGain: gain == null ? -1e15 : gain,
-        sortDay: dayPct == null ? -1e15 : dayPct,
         sortMonth: monthPct == null ? -1e15 : monthPct,
       });
     };
@@ -71,7 +66,6 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
     const sortValOf = (h) => {
       if (sortKey === 'gain') return h.gain;
       if (sortKey === 'gainPct') return h.gainPct;
-      if (sortKey === 'day') return h.dayPct;
       if (sortKey === 'month') return h.monthPct;
       if (sortKey === 'price') return h.price;
       if (sortKey === 'name') return h.name;
@@ -105,7 +99,6 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       { key: 'price', label: '現在値' },
       { key: 'eval', label: '評価額' },
       { key: 'gain', label: '評価損益' },
-      { key: 'day', label: '前日比' },
       { key: 'month', label: '前月比' },
     ];
     const sh = {};
@@ -127,13 +120,10 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       const gainArr = hs.filter((h) => h.gain != null);
       const gain = gainArr.length ? gainArr.reduce((s, h) => s + h.gain, 0) : null;
       const cost = gainArr.length ? gainArr.reduce((s, h) => s + h.costJPY, 0) : null;
-      const dayArr = hs.filter((h) => h.dayYen != null);
-      const dayYen = dayArr.length ? dayArr.reduce((s, h) => s + h.dayYen, 0) : null;
       let monthYen = null;
       if (CATMONTH[c.key] != null) monthYen = CATMONTH[c.key];
       else { const mArr = hs.filter((h) => h.monthYen != null); monthYen = mArr.length ? mArr.reduce((s, h) => s + h.monthYen, 0) : null; }
       const ratio = total > 0 ? ev / total : 0;
-      const dayPctCat = (dayYen == null || ev - dayYen === 0) ? null : dayYen / (ev - dayYen) * 100;
       const monthPctCat = (monthYen == null || ev - monthYen === 0) ? null : monthYen / (ev - monthYen) * 100;
       const isOpen = this.state.focusCat === null || this.state.focusCat === c.key;
       const dim = this.state.focusCat !== null && this.state.focusCat !== c.key;
@@ -144,7 +134,6 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
         gainTxt: gain == null ? '—' : this.signYen(gain),
         gainPctTxt: (gain == null || cost == null || cost === 0) ? '' : this.pct(gain / cost * 100),
         gainColor: this.col(gain),
-        dayTxt: dayPctCat == null ? '—' : this.pct(dayPctCat), dayColor: this.col(dayPctCat),
         monthTxt: monthPctCat == null ? '—' : this.pct(monthPctCat), monthColor: this.col(monthPctCat),
         countTxt: hs.length + '銘柄', isOpen, dimOpacity: dim ? '0.42' : '1',
         onClick: () => this.toggleFocus(c.key),
@@ -226,7 +215,6 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
     const cost = gainArr.reduce((s, h) => s + h.costJPY, 0);
 
     // 試算（フォールバック）：各銘柄の値動きを合算
-    const estDayYen = all.filter((h) => h.dayYen != null).reduce((s, h) => s + h.dayYen, 0);
     const estMonthYen = cats.filter((c) => c.monthTxt !== '—').reduce((s, c) => {
       const cm = CATMONTH[c.key] != null ? CATMONTH[c.key] : c.holdings.filter((h) => h.monthYen != null).reduce((a, h) => a + h.monthYen, 0);
       return s + cm;
@@ -234,17 +222,11 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
 
     // 実測：日次スナップショット（累積保存した評価額合計）の差分から算出
     const vhist = this.readValHist();
-    const vToday = this.todayKey();
     const vMonthTarget = new Date(Date.now() - 28 * 86400000).toISOString().slice(0, 10);
-    let prevSnap = null, monthSnap = null;
+    let monthSnap = null;
     vhist.forEach((s) => {
-      if (s.d < vToday) prevSnap = s;
       if (s.d <= vMonthTarget) monthSnap = s;
     });
-
-    let dayYen, dayBase, dayLabel;
-    if (prevSnap) { dayYen = total - prevSnap.total; dayBase = prevSnap.total; dayLabel = '前日比'; }
-    else { dayYen = estDayYen; dayBase = total - estDayYen; dayLabel = '前日比（試算）'; }
 
     let monthYen, monthBase, monthLabel;
     if (monthSnap) { monthYen = total - monthSnap.total; monthBase = monthSnap.total; monthLabel = '前月比'; }
@@ -252,7 +234,6 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
 
     const summary = {
       gain, gainTxt: this.signYen(gain), gainColor: this.col(gain), gainPctTxt: this.pct(gain / cost * 100),
-      dayLabel, dayTxt: this.signYen(dayYen), dayColor: this.col(dayYen), dayPctTxt: this.pct(dayBase ? dayYen / dayBase * 100 : 0),
       monthLabel, monthTxt: this.signYen(monthYen), monthColor: this.col(monthYen), monthPctTxt: this.pct(monthBase ? monthYen / monthBase * 100 : 0),
     };
 

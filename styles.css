@@ -229,8 +229,8 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 .pf-cat-eval-v { font-size: 17px; font-weight: 800; }
 .pf-cat-eval-gain { font-size: 12px; font-weight: 700; }
 .pf-cat-body { padding: 0 clamp(12px,4vw,22px) 14px; }
-.pf-htable-head { display: grid; grid-template-columns: minmax(0,2.6fr) 1.1fr 1fr 1fr 1.3fr 1.4fr; gap: 8px; padding: 9px 12px; font-size: 11px; color: var(--pf-muted); font-weight: 700; border-bottom: 1px solid var(--pf-border); }
-.pf-htable-row { display: grid; grid-template-columns: minmax(0,2.6fr) 1.1fr 1fr 1fr 1.3fr 1.4fr; gap: 8px; padding: 12px; font-size: 13px; border-bottom: 1px solid var(--pf-row-border); align-items: center; }
+.pf-htable-head { display: grid; grid-template-columns: minmax(0,2.6fr) 1.1fr 1fr 1.3fr 1.4fr; gap: 8px; padding: 9px 12px; font-size: 11px; color: var(--pf-muted); font-weight: 700; border-bottom: 1px solid var(--pf-border); }
+.pf-htable-row { display: grid; grid-template-columns: minmax(0,2.6fr) 1.1fr 1fr 1.3fr 1.4fr; gap: 8px; padding: 12px; font-size: 13px; border-bottom: 1px solid var(--pf-row-border); align-items: center; }
 .pf-h-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pf-h-sub { font-size: 11px; color: var(--pf-muted); margin-top: 1px; }
 .pf-h-gain { font-weight: 800; }
