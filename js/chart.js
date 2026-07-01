@@ -1,6 +1,13 @@
 // ポートフォリオ・ロジック：資産推移グラフのビューモデル構築
 // 履歴(readValHist)から SVG 幾何（エリア/ライン/ドット/軸）と期間トグルを生成。
 window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
+  // ツールチップの前期間比フィールド。cur−prev の差分を「{label} +¥〇〇」＋損益色で返す。
+  // prev が無い（先頭点など）場合は表示しない。
+  momFields(cur, prev, label) {
+    if (prev == null) return { momTxt: null, momColor: null };
+    const d = cur - prev;
+    return { momTxt: label + ' ' + this.signYen(d), momColor: this.col(d) };
+  },
   buildChart() {
     const accent = '#5b9bd5';
     const range = this.state.chartRange | 0;
@@ -58,9 +65,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       const s = series[hv], v = valOf(s), t = String(s.d).split('-');
       const below = pts[hv].y < 95; // 上端に近い点は下側へ出す
       const topPct = (pts[hv].y / 3).toFixed(2) + '%';
-      // 前月（1つ前の月次点）比。差分を「+¥〇〇」で表示。先頭点は前月が無いので出さない。
-      const prevV = hv > 0 ? valOf(series[hv - 1]) : null;
-      const mom = prevV != null ? v - prevV : null;
+      // series は月次集約済み。先頭点は前月が無いので前月比を出さない。
       tip = {
         dotLeftPct: (pts[hv].x / 10).toFixed(2) + '%',
         dotTopPct: topPct,
@@ -70,8 +75,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
         dateTxt: (+t[0]) + '/' + (+t[1]) + '/' + (+t[2]),
         valTxt: this.yen(v),
         valColor: 'var(--pf-text)',
-        momTxt: mom != null ? '前月比 ' + this.signYen(mom) : null,
-        momColor: mom != null ? this.col(mom) : null,
+        ...this.momFields(v, hv > 0 ? valOf(series[hv - 1]) : null, '前月比'),
       };
     }
 
@@ -184,16 +188,12 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
         cpx = hi > lo ? Math.min(Math.max(cpx, lo), hi) : trackW / 2;
         leftPct = (cpx / trackW * 100).toFixed(2) + '%';
       }
-      // 1つ前の期間（月次なら前月／年次なら前年）比。差分を「+¥〇〇」で表示。先頭は前期間が無いので出さない。
-      const prevTot = hv > 0 ? totals[hv - 1] : null;
-      const mom = prevTot != null ? totals[hv] - prevTot : null;
-      const momLabel = period === 'year' ? '前年比' : '前月比';
+      // 先頭は前期間（月次なら前月／年次なら前年）が無いので前期比を出さない。
       tip = {
         leftPct,
         dateTxt: period === 'year' ? (t[0] + '年') : (t[0] + '/' + (+t[1])),
         totalTxt: this.yen(totals[hv]),
-        momTxt: mom != null ? momLabel + ' ' + this.signYen(mom) : null,
-        momColor: mom != null ? this.col(mom) : null,
+        ...this.momFields(totals[hv], hv > 0 ? totals[hv - 1] : null, period === 'year' ? '前年比' : '前月比'),
         rows: CATS.map((c) => ({ name: c.name, color: c.color, valTxt: this.yen(s.cats[c.key] || 0), pctTxt: this.ratioPct(totals[hv] ? (s.cats[c.key] || 0) / totals[hv] : 0) })),
       };
     }

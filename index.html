@@ -490,7 +490,7 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;ownerName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Yoshiwo&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;usdRate&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:160.83,&quot;min&quot;:100,&quot;max&quot;:200,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;},&quot;goldPrice&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:21920,&quot;min&quot;:10000,&quot;max&quot;:40000,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;},&quot;goldPrevClose&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:22000,&quot;min&quot;:0,&quot;max&quot;:40000,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;},&quot;goldMonthAgo&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:20900,&quot;min&quot;:0,&quot;max&quot;:40000,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;},&quot;gainStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;jp&quot;,&quot;us&quot;],&quot;default&quot;:&quot;jp&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;usdRate&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:160.83,&quot;min&quot;:100,&quot;max&quot;:200,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;},&quot;goldPrice&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:21920,&quot;min&quot;:10000,&quot;max&quot;:40000,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;},&quot;goldPrevClose&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:22000,&quot;min&quot;:0,&quot;max&quot;:40000,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;},&quot;goldMonthAgo&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:20900,&quot;min&quot;:0,&quot;max&quot;:40000,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;},&quot;gainStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;jp&quot;,&quot;us&quot;],&quot;default&quot;:&quot;jp&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -570,7 +570,6 @@ class Component extends DCLogic {
       mobileView: mobile, desktopView: !mobile,
       legendCols: !mobile ? '14px 108px minmax(0,1fr) 110px' : '13px minmax(0,1fr) 76px 100px',
       leaveCat: this.leaveCat,
-      owner: (this.props && this.props.ownerName) || 'Yoshiwo',
       lastUpdateTxt: (() => { const vh = this.readValHist(); const d = (vh && vh.length) ? vh[vh.length - 1].d : null; return d ? String(d).replace(/-/g, '/') : '—'; })(),
       rateTxt: m.RATE.toFixed(2),
       rateDotColor: this.state.rateStatus === 'live' ? '#2e9e6e' : (this.state.rateStatus === 'loading' ? '#e0b256' : 'var(--pf-faint)'),
