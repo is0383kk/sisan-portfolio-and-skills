@@ -130,6 +130,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       return Object.assign({}, c, {
         holdings: hs,
         evalNum: ev, evalTxt: this.yen(ev),
+        gainNum: gain, costNum: cost, // 暴落耐性分析(computeCrashTest)が参照する区分別の生値（損益/簿価。無ければnull）
         ratio, ratioTxt: this.ratioPct(ratio), barPct: this.ratioPct(ratio),
         gainTxt: gain == null ? '—' : this.signYen(gain),
         gainPctTxt: (gain == null || cost == null || cost === 0) ? '' : this.pct(gain / cost * 100),
@@ -282,5 +283,420 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
         growthW: (lim.total > 0 ? Math.min(growthUsed / lim.total, 1) * 100 : 0).toFixed(2) + '%',
       },
     };
+  },
+
+  // controlled input の onInput から生の入力値を取り出す。イベント(e.target.value)にも生値にも対応する。
+  inputVal(e) { return (e && e.target) ? e.target.value : e; },
+
+  // 入力文字列を数値化し、非数・空欄は下限値へ、下限未満は下限へクランプする（分析パネル各入力の共通サニタイズ）。
+  clampNum(raw, min) {
+    const lo = min == null ? 0 : min;
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? Math.max(lo, n) : lo;
+  },
+
+  // 暴落耐性分析のデフォルト値。state 未設定時のフォールバックと「デフォルトに戻す」の基準として単一情報源にする。
+  crashDefaults() {
+    return {
+      drops: [10, 20, 30], // 下落シナリオ(%)。A/B 共通。
+      // β=「市場が1%下がるとき各区分が何%下がるか」の想定値。根拠は下記の前提に基づく概算で厳密な実測ではない:
+      //   jp(国内株)=1.0   … 市場（TOPIX/日経）とほぼ連動する想定の基準値。
+      //   us(米国株)=1.15  … 指数連動に加え、株安局面で進みやすい円高（円換算目減り）を上乗せした保守的な想定。
+      //   fund(投信)=0.85  … 投信は債券・分散を含む前提で株式より下落を抑えめに見積もる概算。
+      betas: { jp: 1.0, us: 1.15, fund: 0.85 },
+    };
+  },
+
+  // 暴落耐性分析：市場が下落したときの評価額・下落額・含み益の消失を試算する。
+  // 引数 m は computeModel() の戻り値（cats/total を参照）。renderVals() から computeModel() を1度だけ呼び共有する。
+  // 下落率シナリオ(drops)とβ(betas)は state から読み、編集で即再計算される（未設定時は crashDefaults() を使用）。
+  //
+  // 2つの下落モデルを併記する（いずれも「試算」であり将来を保証しない）:
+  //  - A. 一律（uniform）: 全資産に市場下落率をそのまま適用。区分の性質を区別しない単純な下限イメージ。
+  //  - B. 区分別感応度（beta）: 区分ごとの下落感応度(β)を市場下落率に乗じて適用。
+  //       ※ 実際の保有内容により感応度は変わるため、この係数は目安。既定値の根拠は crashDefaults() を参照。
+  computeCrashTest(m) {
+    const total = m.total;
+    if (!(total > 0)) return { has: false };
+
+    const def = this.crashDefaults();
+    const betaState = this.state.crashBetas || def.betas;
+    const BETA = {
+      jp: betaState.jp != null ? betaState.jp : def.betas.jp,
+      us: betaState.us != null ? betaState.us : def.betas.us,
+      fund: betaState.fund != null ? betaState.fund : def.betas.fund,
+    };
+    // 下落率(%)を小数へ。未設定・非数はデフォルトへフォールバック。
+    const dropsPct = (Array.isArray(this.state.crashDrops) && this.state.crashDrops.length) ? this.state.crashDrops : def.drops;
+    const DROPS = dropsPct.map((p) => (Number.isFinite(p) ? p : 0) / 100);
+
+    // 評価額と含み益(gain)から取得原価(cost)を復元。原価不明の区分は評価額=原価とみなし損益ゼロ扱い。
+    const catList = m.cats.map((c) => ({
+      key: c.key, name: c.name, color: c.color,
+      evalNum: c.evalNum,
+      gainNum: c.gainNum == null ? 0 : c.gainNum,
+      beta: BETA[c.key] != null ? BETA[c.key] : 1.0,
+    }));
+    const totalCost = catList.reduce((s, c) => s + (c.evalNum - c.gainNum), 0);
+    const totalGain = catList.reduce((s, c) => s + c.gainNum, 0);
+
+    // model: 'uniform'（A・βを無視して一律）/ 'beta'（B・区分別β）
+    const buildScenario = (drop, model) => {
+      let dropYen = 0;
+      const catRows = catList.map((c) => {
+        const eff = model === 'beta' ? drop * c.beta : drop; // 区分ごとの実効下落率
+        const d = c.evalNum * eff;
+        dropYen += d;
+        return { key: c.key, name: c.name, color: c.color, dropYen: d };
+      });
+      const afterTotal = total - dropYen;
+      const afterGain = afterTotal - totalCost; // 下落後の含み損益（原価は不変）
+      return {
+        dropTxt: (drop * 100).toFixed(0) + '%',
+        afterTotalTxt: this.yen(afterTotal),
+        dropYenTxt: this.signYen(-dropYen),
+        dropPctTxt: this.pct(total > 0 ? -dropYen / total * 100 : 0),
+        afterGainTxt: this.signYen(afterGain),
+        afterGainColor: this.col(afterGain),
+        // 含み益が残っているうちは緑、含み損に転落したら赤で「取得原価割れ」を明示
+        turnsLossTxt: afterGain < 0 ? '取得原価割れ' : '含み益を維持',
+        turnsLossColor: afterGain < 0 ? this.col(-1) : this.col(1),
+        barPct: this.ratioPct(Math.min(dropYen / total, 1)),
+        cats: catRows.map((r) => ({
+          name: r.name, color: r.color,
+          dropYenTxt: this.signYen(-r.dropYen),
+        })),
+      };
+    };
+
+    const models = [
+      { key: 'uniform', label: 'A. 一律下落', desc: '全資産に下落率を一律適用' },
+      { key: 'beta', label: 'B. 区分別感応度', desc: '区分ごとの下落感応度(β)を反映' },
+    ].map((md) => ({
+      label: md.label, desc: md.desc,
+      scenarios: DROPS.map((d) => buildScenario(d, md.key)),
+    }));
+
+    return {
+      has: true,
+      models,
+      currentTotalTxt: this.yen(total),
+      currentGainTxt: this.signYen(totalGain),
+      currentGainColor: this.col(totalGain),
+      // A/B 共通：下落率(%)の編集入力。変更で即 setState → 再計算。
+      dropInputs: dropsPct.map((p, i) => ({
+        value: p,
+        onInput: (e) => this.setCrashDrop(i, this.inputVal(e)),
+      })),
+      // B：区分別βの編集入力（凡例を兼ねる）。
+      betaInputs: catList.map((c) => ({
+        key: c.key, name: c.name, color: c.color,
+        value: c.beta,
+        onInput: (e) => this.setCrashBeta(c.key, this.inputVal(e)),
+      })),
+      resetFn: () => this.resetCrash(),
+    };
+  },
+
+  // 下落シナリオ(%)の i 番目を更新。空欄・非数は 0 として扱い、負値は 0 で下限クランプ。
+  setCrashDrop(i, raw) {
+    const def = this.crashDefaults();
+    const v = this.clampNum(raw, 0);
+    this.setState((s) => {
+      const base = (Array.isArray(s.crashDrops) && s.crashDrops.length) ? s.crashDrops : def.drops;
+      const next = base.slice();
+      next[i] = v;
+      return { crashDrops: next };
+    });
+  },
+
+  // 区分別βを更新。空欄・非数は 0、負値は 0 で下限クランプ。
+  setCrashBeta(key, raw) {
+    const def = this.crashDefaults();
+    const v = this.clampNum(raw, 0);
+    this.setState((s) => {
+      const base = Object.assign({}, def.betas, s.crashBetas);
+      return { crashBetas: Object.assign({}, base, { [key]: v }) };
+    });
+  },
+
+  // 下落率・βを既定値へ戻す。
+  resetCrash() {
+    const def = this.crashDefaults();
+    this.setState({ crashDrops: def.drops.slice(), crashBetas: Object.assign({}, def.betas) });
+  },
+
+  // 将来シミュレーションのデフォルト値。state 未設定時のフォールバックと「デフォルトに戻す」の基準。
+  // init(初期元本)は null のとき現在評価額合計を使うため、既定は null。
+  futureDefaults() {
+    return { mode: 'forward', rate: 5, monthly: 30000, years: 20, init: null, target: 10000000 };
+  },
+
+  // 将来シミュレーション：初期元本＋毎月積立を年率で毎月複利運用したときの将来評価額を試算する。
+  // 2モード（state.futureMode）:
+  //  - forward（順算）: 毎月積立から将来評価額を求める。
+  //  - reverse（逆算）: 目標金額から、達成に必要な毎月積立額を逆算する。
+  // 引数 m は computeModel() の戻り値（total を初期元本の既定に使う）。入力は state から読み、編集で即再計算。
+  //
+  // 計算前提（いずれも「試算」であり将来を保証しない）:
+  //  - 月利 = 年率 / 12（近似。厳密な (1+年率)^(1/12)-1 ではなく、一般的な積立計算に合わせた単純化）。
+  //  - 積立は毎月末に行う期末型。初月から years×12 ヶ月ぶん拠出する。
+  //  - 税・手数料・為替・インフレは考慮しない。
+  computeFuture(m) {
+    const def = this.futureDefaults();
+    const st = this.state;
+    const mode = st.futureMode || def.mode;
+    const rate = Number.isFinite(st.futureRate) ? st.futureRate : def.rate;      // 想定年率(%)
+    const years = Number.isFinite(st.futureYears) ? st.futureYears : def.years;   // 期間(年)
+    const init = (st.futureInit == null) ? (m.total || 0) : st.futureInit;        // 初期元本(円)。未指定は現在評価額。
+    const target = Number.isFinite(st.futureTarget) ? st.futureTarget : def.target; // 目標金額(円・逆算用)
+
+    const months = Math.max(0, Math.round(years * 12));
+    const mRate = rate / 100 / 12;
+    const growthFactor = Math.pow(1 + mRate, months); // 初期元本が期末までに成長する倍率
+
+    // 毎月積立額を決める。forward は入力値、reverse は目標から逆算。
+    let monthly, reachableNote = '';
+    if (mode === 'reverse') {
+      if (months <= 0) {
+        monthly = 0;
+      } else if (mRate === 0) {
+        monthly = (target - init) / months; // 年率0：単純割り
+      } else {
+        // 期末型年金終価係数 annuity = ((1+r)^n - 1) / r。FV = init*growth + monthly*annuity を monthly について解く。
+        const annuity = (growthFactor - 1) / mRate;
+        monthly = (target - init * growthFactor) / annuity;
+      }
+      if (monthly < 0) { monthly = 0; reachableNote = '初期元本の運用だけで目標に到達する見込みです（積立は不要）。'; }
+    } else {
+      monthly = Number.isFinite(st.futureMonthly) ? st.futureMonthly : def.monthly;
+    }
+
+    // 毎月複利で元本推移を積み上げ、期末ごとの評価額を記録（グラフ用）。
+    let bal = init;
+    const points = [{ year: 0, value: bal }];
+    for (let i = 1; i <= months; i++) {
+      bal = bal * (1 + mRate) + monthly; // 期末に運用益を付与し、積立を加算
+      if (i % 12 === 0) points.push({ year: i / 12, value: bal });
+    }
+    // 期間が年の整数倍でない場合、最終月を末尾に補完
+    if (months % 12 !== 0) points.push({ year: years, value: bal });
+
+    const contributed = init + monthly * months; // 投下元本（初期＋積立総額）
+    const finalVal = bal;
+    const profit = finalVal - contributed;       // 運用収益
+
+    // 折れ線グラフのジオメトリ（評価額推移）。既存 buildChart と同じ viewBox 0..1000 x 0..300。
+    const W = 1000, H = 300, PAD = 6;
+    const maxV = points.reduce((mx, p) => Math.max(mx, p.value), 1);
+    const n = points.length;
+    const xOf = (i) => n <= 1 ? 0 : (i / (n - 1)) * W;
+    const yOf = (v) => H - PAD - (v / maxV) * (H - PAD * 2);
+    const linePts = points.map((p, i) => xOf(i).toFixed(1) + ',' + yOf(p.value).toFixed(1)).join(' ');
+    const areaPath = 'M0,' + H + ' ' + points.map((p, i) => 'L' + xOf(i).toFixed(1) + ',' + yOf(p.value).toFixed(1)).join(' ') + ' L' + W + ',' + H + ' Z';
+    const accent = '#5cc4a3';
+
+    // X軸目盛：0年・中間・最終の3点
+    const xticks = n <= 1 ? [] : [0, Math.floor((n - 1) / 2), n - 1].map((i) => ({ label: points[i].year + '年' }));
+
+    const contribRatio = finalVal > 0 ? contributed / finalVal : 0;
+
+    return {
+      has: months > 0,
+      isForward: mode !== 'reverse', isReverse: mode === 'reverse',
+      // モード切替タブ
+      modeTabs: [{ k: 'forward', l: '積立から将来額' }, { k: 'reverse', l: '目標から必要積立' }].map((t) => ({
+        label: t.l, onClick: () => this.setState({ futureMode: t.k }),
+        bg: mode === t.k ? 'var(--pf-toggle-active)' : 'transparent',
+        color: mode === t.k ? 'var(--pf-on-accent)' : 'var(--pf-text-2)',
+      })),
+      // 入力バインド（変更で即 setState → 再計算）
+      rateInput: { value: rate, onInput: (e) => this.setFutureField('futureRate', this.inputVal(e)) },
+      monthlyInput: { value: monthly, onInput: (e) => this.setFutureField('futureMonthly', this.inputVal(e)) },
+      yearsInput: { value: years, onInput: (e) => this.setFutureField('futureYears', this.inputVal(e)) },
+      initInput: { value: Math.round(init), onInput: (e) => this.setFutureField('futureInit', this.inputVal(e)) },
+      targetInput: { value: Math.round(target), onInput: (e) => this.setFutureField('futureTarget', this.inputVal(e)) },
+      resetFn: () => this.resetFuture(),
+      // サマリー
+      finalTxt: this.yen(finalVal),
+      targetTxt: this.yen(target),
+      monthlyOutTxt: this.yen(Math.max(0, Math.round(monthly))), // 逆算結果の必要毎月積立額
+      reachableNote,
+      contributedTxt: this.yen(contributed),
+      profitTxt: this.signYen(profit),
+      profitColor: this.col(profit),
+      profitPctTxt: this.pct(contributed > 0 ? profit / contributed * 100 : 0),
+      yearsTxt: years + '年後',
+      // 元本／収益の割合バー
+      contribW: this.ratioPct(Math.min(contribRatio, 1)),
+      profitW: this.ratioPct(Math.max(1 - contribRatio, 0)),
+      // グラフ
+      chart: { hasChart: n >= 2, accent, linePts, areaPath, xticks },
+    };
+  },
+
+  // 将来シミュレーションの数値フィールドを更新。空欄・非数・負値は 0 へクランプ。
+  setFutureField(field, raw) {
+    this.setState({ [field]: this.clampNum(raw, 0) });
+  },
+
+  // 将来シミュレーションを既定値へ戻す（初期元本も現在評価額の既定へ戻す。モードは維持）。
+  resetFuture() {
+    const def = this.futureDefaults();
+    this.setState({ futureRate: def.rate, futureMonthly: def.monthly, futureYears: def.years, futureInit: def.init, futureTarget: def.target });
+  },
+
+  // リバランス提案分析：目標配分(%)を入力すると、現状とのズレと必要な売買額を提示する。
+  // 引数 m は computeModel() の戻り値（total と区分別 evalNum を参照）。
+  // 目標配分の既定は「現在の配分」＝初期状態はズレゼロ。入力した％は合計が100でなくても、
+  // 内部で合計比に正規化して評価額へ按分するため、売買額の総和は常にゼロ（総額を維持したリバランス）になる。
+  computeRebalance(m) {
+    const total = m.total;
+    if (!(total > 0)) return { has: false };
+    const st = this.state;
+    const tg = st.rebalTargets || {};
+
+    const cats = m.cats.map((c) => {
+      const curPct = c.evalNum / total * 100;
+      const tRaw = Number.isFinite(tg[c.key]) ? tg[c.key] : curPct; // 未設定は現在配分を既定
+      return { key: c.key, name: c.name, color: c.color, evalNum: c.evalNum, curPct, tRaw };
+    });
+    const sumT = cats.reduce((s, c) => s + c.tRaw, 0);
+
+    const rows = cats.map((c) => {
+      const targetEval = sumT > 0 ? total * (c.tRaw / sumT) : 0; // 合計比で正規化して按分
+      const diff = targetEval - c.evalNum; // >0 買い増し / <0 売却
+      const actionTxt = Math.abs(diff) < 1 ? '調整不要' : (diff > 0 ? '買い増し' : '売却');
+      return {
+        name: c.name, color: c.color,
+        curPctTxt: this.ratioPct(c.curPct / 100), curEvalTxt: this.yen(c.evalNum),
+        targetInput: { value: +c.tRaw.toFixed(1), onInput: (e) => this.setRebalTarget(c.key, this.inputVal(e)) },
+        targetEvalTxt: this.yen(targetEval),
+        diffTxt: this.signYen(diff), diffColor: this.col(diff), actionTxt,
+      };
+    });
+
+    return {
+      has: true, rows, totalTxt: this.yen(total),
+      sumTxt: sumT.toFixed(1) + '%',
+      normalized: Math.abs(sumT - 100) > 0.05, // 合計が100%でないとき注記を出す
+      resetFn: () => this.setState({ rebalTargets: null }),
+    };
+  },
+
+  // リバランス目標配分(%)を更新。空欄・非数は 0、負値は 0 で下限クランプ。
+  setRebalTarget(key, raw) {
+    const v = this.clampNum(raw, 0);
+    this.setState((s) => ({ rebalTargets: Object.assign({}, s.rebalTargets || {}, { [key]: v }) }));
+  },
+
+  // ドローダウン / 変動性分析：評価額の月次履歴から、最大下落幅・現在の下落幅・月次リターンのばらつきを算出する。
+  // buildChart と同じく各月(YYYY-MM)の最新1点へ集約した系列を使う（暴落耐性分析の「実測版」）。
+  // 履歴が2点未満のときは hasData=false でメッセージ表示。
+  computeDrawdown() {
+    let series = this.readValHist().filter((s) => s && s.d && s.total != null).sort((a, b) => (a.d < b.d ? -1 : 1));
+    series = this.aggregateByMonth(series);
+    if (series.length < 2) {
+      return { has: true, hasData: false, emptyMsg: '月次の評価額履歴が2点以上たまると、ドローダウンと変動性を分析できます。' };
+    }
+
+    const vals = series.map((s) => s.total);
+    // 過去最高値(running peak)からの下落率を各点で算出し、最大ドローダウンとその区間を記録。
+    let peak = vals[0], curPeakIdx = 0, maxDD = 0, ddPeakIdx = 0, ddTroughIdx = 0;
+    const ddSeries = [];
+    vals.forEach((v, i) => {
+      if (v > peak) { peak = v; curPeakIdx = i; }
+      const dd = peak > 0 ? (peak - v) / peak : 0;
+      ddSeries.push(dd);
+      if (dd > maxDD) { maxDD = dd; ddPeakIdx = curPeakIdx; ddTroughIdx = i; }
+    });
+    const allHigh = Math.max.apply(null, vals);
+    const last = vals[vals.length - 1];
+    const curDD = allHigh > 0 ? (allHigh - last) / allHigh : 0;
+
+    // 月次リターンの平均・標準偏差（母集団）・年率換算ボラティリティ（×√12）。
+    const rets = [];
+    for (let i = 1; i < vals.length; i++) { if (vals[i - 1] > 0) rets.push((vals[i] - vals[i - 1]) / vals[i - 1]); }
+    const mean = rets.length ? rets.reduce((a, b) => a + b, 0) / rets.length : 0;
+    const variance = rets.length ? rets.reduce((a, b) => a + (b - mean) * (b - mean), 0) / rets.length : 0;
+    const std = Math.sqrt(variance);
+    const annVol = std * Math.sqrt(12);
+    const best = rets.length ? Math.max.apply(null, rets) : 0;
+    const worst = rets.length ? Math.min.apply(null, rets) : 0;
+
+    // アンダーウォーター図（ドローダウンの深さ推移）。上端=0%、下へ行くほど深い。既存 chart と同じ viewBox。
+    const W = 1000, H = 300, PAD = 6, n = ddSeries.length;
+    const maxPlot = Math.max(maxDD, 0.01);
+    const xOf = (i) => n <= 1 ? 0 : i / (n - 1) * W;
+    const yOf = (dd) => PAD + (dd / maxPlot) * (H - 2 * PAD);
+    const pts = ddSeries.map((dd, i) => ({ x: +xOf(i).toFixed(1), y: +yOf(dd).toFixed(1) }));
+    const linePts = pts.map((p) => p.x + ',' + p.y).join(' ');
+    const areaPath = 'M0,' + PAD + ' ' + pts.map((p) => 'L' + p.x + ',' + p.y).join(' ') + ' L' + W + ',' + PAD + ' Z';
+    const fmtD = (d) => { const t = String(d).split('-'); return t[0] + '/' + (+t[1]); };
+    const xticks = [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i).map((i) => ({ label: fmtD(series[i].d) }));
+
+    // ホバー/タップ中の点だけに出す強調ドット＋ツールチップ（年月・下落率・評価額）。
+    // 位置は操作レイヤー(.pf-chart-hit)が最寄り点を ddHover に設定する。既存の資産推移グラフと同じ座標系(/10, /3)。
+    this._ddN = n;
+    const hv = this.state.ddHover;
+    let tip = null;
+    if (hv != null && hv >= 0 && hv < n) {
+      const dd = ddSeries[hv], t = String(series[hv].d).split('-');
+      const below = pts[hv].y < 95; // 上端(浅いDD)に近い点はツールチップを下側へ出す
+      const topPct = (pts[hv].y / 3).toFixed(2) + '%';
+      tip = {
+        dotLeftPct: (pts[hv].x / 10).toFixed(2) + '%',
+        dotTopPct: topPct,
+        leftPct: Math.min(Math.max(pts[hv].x / 10, 9), 91).toFixed(2) + '%',
+        topPct: topPct,
+        transform: below ? 'translate(-50%, 13px)' : 'translate(-50%, calc(-100% - 13px))',
+        dateTxt: (+t[0]) + '/' + (+t[1]),
+        valTxt: this.pct(-dd * 100), // 最高値比の下落率（0=最高値更新中）
+        valColor: this.col(-dd),
+        momTxt: '評価額 ' + this.yen(vals[hv]),
+        momColor: 'var(--pf-text-2)',
+      };
+    }
+
+    return {
+      has: true, hasData: true,
+      maxDDTxt: this.pct(-maxDD * 100),
+      maxDDRangeTxt: fmtD(series[ddPeakIdx].d) + ' → ' + fmtD(series[ddTroughIdx].d),
+      curDDTxt: this.pct(-curDD * 100), curDDColor: this.col(-curDD),
+      avgRetTxt: this.pct(mean * 100),
+      volTxt: (annVol * 100).toFixed(1) + '%', volMonthTxt: (std * 100).toFixed(1) + '%',
+      bestTxt: this.pct(best * 100), worstTxt: this.pct(worst * 100),
+      pointsTxt: series.length + '点（月次）',
+      accent: '#d75049', hasChart: n >= 2, linePts, areaPath, xticks, tip,
+      // ホバーは資産推移グラフと共通の hoverNearest を使う（最寄り点を ddHover へ設定）。
+      hit: { move: (e) => this.hoverNearest(e, this._ddN | 0, 'ddHover'), leave: () => { if (this.state.ddHover != null) this.setState({ ddHover: null }); } },
+    };
+  },
+
+  // 分析パネル（アコーディオン）。各項目を独立に開閉でき、複数同時展開も可能（state.openPanels）。デフォルトは全て閉じ。
+  // 分析機能を増やす場合はこの配列に定義を足し、index.html に対応する本文 sc-if を追加する。
+  buildAnalysisPanels(m) {
+    const openMap = this.state.openPanels || {};
+    const defs = [
+      { key: 'crash', title: '暴落耐性分析', sub: '市場下落時の評価額シミュレーション' },
+      { key: 'future', title: '将来シミュレーション分析', sub: '積立から将来額／目標から必要積立を試算' },
+      { key: 'rebalance', title: 'リバランス提案分析', sub: '目標配分とのズレと必要な売買額' },
+      { key: 'drawdown', title: 'ドローダウン / 変動性分析', sub: '過去の最大下落幅と月次リターンのばらつき' },
+    ];
+    return defs.map((d) => {
+      const open = !!openMap[d.key];
+      return {
+        key: d.key, title: d.title, sub: d.sub,
+        isOpen: open,
+        isCrash: d.key === 'crash', isFuture: d.key === 'future',
+        isRebal: d.key === 'rebalance', isDrawdown: d.key === 'drawdown',
+        caret: open ? '▲' : '▼',
+        // クリックで該当項目だけを開閉トグル（他項目の状態は保持＝複数同時展開可）。
+        onClick: () => this.setState((s) => {
+          const cur = s.openPanels || {};
+          return { openPanels: Object.assign({}, cur, { [d.key]: !cur[d.key] }) };
+        }),
+      };
+    });
   },
 });

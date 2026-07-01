@@ -1,12 +1,22 @@
 // ポートフォリオ・ロジック：資産推移グラフのビューモデル構築
 // 履歴(readValHist)から SVG 幾何（エリア/ライン/ドット/軸）と期間トグルを生成。
 window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
-  // ツールチップの前期間比フィールド。cur−prev の差分を「{label} +¥〇〇」＋損益色で返す。
+  // ツールチップの前期間比フィールド。cur−prev の差分を「{label} +¥〇〇 (+〇.〇〇%)」＋損益色で返す。
+  // ％は差分 d を前期間値の絶対値で割った変化率（prev が 0 のときは計算不能なので円のみ）。
   // prev が無い（先頭点など）場合は表示しない。
   momFields(cur, prev, label) {
     if (prev == null) return { momTxt: null, momColor: null };
     const d = cur - prev;
-    return { momTxt: label + ' ' + this.signYen(d), momColor: this.col(d) };
+    const pctTxt = prev !== 0 ? ' (' + this.pct(d / Math.abs(prev) * 100) + ')' : '';
+    return { momTxt: label + ' ' + this.signYen(d) + pctTxt, momColor: this.col(d) };
+  },
+  // 日次スナップショット配列を各月(YYYY-MM)の最新1点へ集約する。series は日付昇順を前提（同月は後勝ち＝最新）。
+  // 資産推移グラフとドローダウン図（computeDrawdown）で共有。
+  aggregateByMonth(series) {
+    if (!series.length) return series;
+    const mmap = new Map();
+    series.forEach((s) => mmap.set(String(s.d).slice(0, 7), s));
+    return Array.from(mmap.values());
   },
   buildChart() {
     const accent = '#5b9bd5';
@@ -24,11 +34,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
     let series = this.readValHist().filter((s) => s && s.d && valOf(s) != null).sort((a, b) => (a.d < b.d ? -1 : 1));
     // 月次の等間隔で描くため、各月(YYYY-MM)の最新1点に集約する。
     // 過去の完了月は月末値、進行中の今月は直近の日次スナップショット＝右端が「今月の最新」になる。
-    if (series.length) {
-      const mmap = new Map();
-      series.forEach((s) => mmap.set(String(s.d).slice(0, 7), s)); // 同月は後勝ち＝最新（series は昇順なので各月の最終点が残る）
-      series = Array.from(mmap.values());
-    }
+    series = this.aggregateByMonth(series);
     if (range > 0 && series.length) {
       const cut = new Date(series[series.length - 1].d).getTime() - range * 86400000;
       const f = series.filter((s) => new Date(s.d).getTime() >= cut);
@@ -100,9 +106,9 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
     });
   },
 
-  // 操作レイヤー上のポインタ位置から最寄りデータ点を求め chartHover に設定（丸ポチの有無に依らず動作）
-  chartHoverAt(e) {
-    const n = this._chartN | 0;
+  // 操作レイヤー上のポインタ位置から最寄りデータ点(0..n-1)を求め state[stateKey] に設定（丸ポチの有無に依らず動作）。
+  // 資産推移グラフとドローダウン図（computeDrawdown）で共有する汎用ホバーロジック。
+  hoverNearest(e, n, stateKey) {
     if (n < 2 || !e || !e.currentTarget) return;
     const r = e.currentTarget.getBoundingClientRect();
     const cx = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
@@ -110,8 +116,9 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
     let frac = (cx - r.left) / r.width;
     frac = frac < 0 ? 0 : frac > 1 ? 1 : frac;
     const i = Math.round(frac * (n - 1));
-    if (i !== this.state.chartHover) this.setState({ chartHover: i });
+    if (i !== this.state[stateKey]) this.setState({ [stateKey]: i });
   },
+  chartHoverAt(e) { this.hoverNearest(e, this._chartN | 0, 'chartHover'); },
 
   // 資産構成の推移（積み上げ棒）：履歴の cats（カテゴリ別評価額）を月次/年次に集計
   niceCeil(v) {
