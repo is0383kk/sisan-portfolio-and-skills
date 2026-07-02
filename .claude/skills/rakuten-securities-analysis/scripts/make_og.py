@@ -177,7 +177,8 @@ def render(model: dict, out_path: Path) -> Path:
     _text_center(d, s(dcx), s(cyy + 56), cen["sub2"], f_cs, cen["color"])
 
     # ---- 凡例 ----
-    leg_x = don_pad + 236 + 40
+    # 末尾の +8 はドーナツ（評価額合計）と凡例の横間隔。値を小さくするほど両者が近づく。
+    leg_x = don_pad + 236 + 8
     leg_w = CARD_W - leg_x - 26
     rows = model["cats"]
     row_h = 58

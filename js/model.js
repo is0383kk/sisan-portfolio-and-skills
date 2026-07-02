@@ -48,18 +48,6 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
     const all = CFG.holdings.map(enrich);
     const total = all.reduce((s, h) => s + h.evalJPY, 0);
 
-    // ----- 損益率ランキング（ベスト/ワースト）: 評価損益率で並べた上位・下位3銘柄 -----
-    const catColor = {}; CATS.forEach((c) => { catColor[c.key] = c.color; });
-    const moverRow = (h) => ({
-      name: h.name, code: h.code, color: catColor[h.cat],
-      gainPctTxt: this.pct(h.gainPct), gainTxt: this.signYen(h.gain), gainColor: this.col(h.gain),
-    });
-    const ranked = all.filter((h) => h.gainPct != null).sort((a, b) => b.gainPct - a.gainPct);
-    const mk = Math.min(3, Math.floor(ranked.length / 2)); // best/worst が重複しない最大件数（銘柄が少ない時の重複を防ぐ）
-    const movers = mk >= 1
-      ? { has: true, best: ranked.slice(0, mk).map(moverRow), worst: ranked.slice(ranked.length - mk).reverse().map(moverRow) }
-      : { has: false };
-
     // ----- カテゴリ内の銘柄の並び替え（state.sortKey / sortDir、データ無は常に末尾） -----
     const sortKey = this.state.sortKey || 'eval';
     const sortDir = this.state.sortDir || 'desc';
@@ -238,7 +226,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       monthLabel, monthTxt: this.signYen(monthYen), monthColor: this.col(monthYen), monthPctTxt: this.pct(monthBase ? monthYen / monthBase * 100 : 0),
     };
 
-    return { cats, donut, donutLabels, center, focusObj, drill: focusCat !== null, total, totalTxt: this.yen(total), summary, movers, sh, sortChips, RATE, GOLD };
+    return { cats, donut, donutLabels, center, focusObj, drill: focusCat !== null, total, totalTxt: this.yen(total), summary, sh, sortChips, RATE, GOLD };
   },
 
   toggleFocus(key) { this.setState((s) => ({ focusCat: s.focusCat === key ? null : key })); },

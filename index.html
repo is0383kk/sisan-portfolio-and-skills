@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>資産ポートフォリオサンプル</title>
-<meta name="description" content="国内株・米国株・投資信託・金（ゴールド）の資産構成・評価額・評価損益・資産推移を、日次スナップショットで自動更新して可視化する公開ポートフォリオ ダッシュボード。資産配分の推移や評価損益率ランキング、銘柄別の損益も閲覧できます。">
+<meta name="description" content="国内株・米国株・投資信託・金（ゴールド）の資産構成・評価額・評価損益・資産推移を、日次スナップショットで自動更新して可視化する公開ポートフォリオ ダッシュボード。資産配分の推移や銘柄別の損益も閲覧できます。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="is0383kk">
 <meta property="og:title" content="資産ポートフォリオサンプル">
-<meta property="og:description" content="国内株・米国株・投資信託・金の資産構成・評価損益・資産推移を毎日自動更新で可視化する公開ダッシュボード。損益率ランキングも。">
+<meta property="og:description" content="国内株・米国株・投資信託・金の資産構成・評価損益・資産推移を毎日自動更新で可視化する公開ダッシュボード。">
 <meta property="og:url" content="https://is0383kk.github.io/sisan-portfolio-and-skills/">
 <meta property="og:image" content="https://is0383kk.github.io/sisan-portfolio-and-skills/og.png">
 <meta property="og:image:width" content="1200">
@@ -16,7 +16,7 @@
 <meta property="og:image:alt" content="資産ポートフォリオサンプルの資産構成ドーナツと区分別割合（国内株・米国株・投資信託・金）">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="資産ポートフォリオサンプル">
-<meta name="twitter:description" content="国内株・米国株・投資信託・金の資産構成・評価損益・資産推移を毎日自動更新で可視化する公開ダッシュボード。損益率ランキングも。">
+<meta name="twitter:description" content="国内株・米国株・投資信託・金の資産構成・評価損益・資産推移を毎日自動更新で可視化する公開ダッシュボード。">
 <meta name="twitter:image" content="https://is0383kk.github.io/sisan-portfolio-and-skills/og.png">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
@@ -282,43 +282,6 @@
       </sc-if>
     </div>
 
-    <!-- ============ MOVERS (損益率ランキング) ============ -->
-    <sc-if value="{{ movers.has }}" hint-placeholder-val="{{ true }}">
-    <div class="pf-movers-wrap">
-      <sc-if value="{{ mobileView }}" hint-placeholder-val="{{ false }}">
-      <button class="pf-movers-toggle" onClick="{{ moversToggle }}">
-        <span>損益率ランキング（ベスト3 / ワースト3）</span>
-        <span class="pf-movers-caret">{{ moversCaret }}</span>
-      </button>
-      </sc-if>
-      <sc-if value="{{ moversShow }}" hint-placeholder-val="{{ true }}">
-      <div class="pf-movers">
-      <div class="pf-movers-col">
-        <div class="pf-movers-head">評価損益率 上位</div>
-        <sc-for list="{{ movers.best }}" as="mv" hint-placeholder-count="3">
-          <div class="pf-mover-row">
-            <i class="pf-swatch-sm" style="background:{{ mv.color }};"></i>
-            <div class="pf-mover-name">{{ mv.name }} <span class="pf-code">{{ mv.code }}</span></div>
-            <div class="pf-mover-pct" style="color:{{ mv.gainColor }};">{{ mv.gainPctTxt }}</div>
-            <div class="pf-mover-gain" style="color:{{ mv.gainColor }};">{{ mv.gainTxt }}</div>
-          </div>
-        </sc-for>
-      </div>
-      <div class="pf-movers-col">
-        <div class="pf-movers-head">評価損益率 下位</div>
-        <sc-for list="{{ movers.worst }}" as="mv" hint-placeholder-count="3">
-          <div class="pf-mover-row">
-            <i class="pf-swatch-sm" style="background:{{ mv.color }};"></i>
-            <div class="pf-mover-name">{{ mv.name }} <span class="pf-code">{{ mv.code }}</span></div>
-            <div class="pf-mover-pct" style="color:{{ mv.gainColor }};">{{ mv.gainPctTxt }}</div>
-            <div class="pf-mover-gain" style="color:{{ mv.gainColor }};">{{ mv.gainTxt }}</div>
-          </div>
-        </sc-for>
-      </div>
-      </div>
-      </sc-if>
-    </div>
-    </sc-if>
 
     <!-- ============ DONUT + LEGEND / DRILL-DOWN ============ -->
     <div>
@@ -513,7 +476,7 @@
             <span class="pf-panel-title">{{ ap.title }}</span>
             <span class="pf-panel-sub">{{ ap.sub }}</span>
           </span>
-          <span class="pf-movers-caret">{{ ap.caret }}</span>
+          <span class="pf-panel-caret">{{ ap.caret }}</span>
         </button>
 
         <sc-if value="{{ ap.isOpen }}" hint-placeholder-val="{{ false }}">
@@ -818,7 +781,6 @@ class Component extends DCLogic {
       chartMixPeriod: 'month',
       sortKey: 'eval',
       sortDir: 'desc',
-      moversOpen: false,
       openPanels: {}, // 分析パネルの開閉状態。キー(crash/future/rebalance/drawdown)ごとに true=展開。複数同時展開可。
       crashDrops: [10, 20, 30], // 暴落耐性分析(A/B共通)の下落シナリオ(%)。編集可・グラフへ即反映。
       crashBetas: { jp: 1.0, us: 1.15, fund: 0.85 }, // 暴落耐性分析(B)の区分別感応度β。編集可・グラフへ即反映。
@@ -881,10 +843,8 @@ class Component extends DCLogic {
     return {
       cats: m.cats, donut: m.donut, donutLabels: m.donutLabels, focusObj: m.focusObj,
       drill: m.drill, drillOff: !m.drill, backFn: () => this.setState({ focusCat: null, hoverCat: null }),
-      totalTxt: m.totalTxt, summary: m.summary, movers: m.movers,
+      totalTxt: m.totalTxt, summary: m.summary,
       sh: m.sh, sortChips: m.sortChips,
-      moversShow: !mobile || this.state.moversOpen, moversCaret: this.state.moversOpen ? '▲' : '▼',
-      moversToggle: () => this.setState((s) => ({ moversOpen: !s.moversOpen })),
       center: m.center, chart: this.buildChart(), mixChart: this.buildMixChart(), nisa: this.computeNisa(),
       analysisPanels: this.buildAnalysisPanels(m),
       crash: this.computeCrashTest(m), future: this.computeFuture(m),

@@ -28,7 +28,7 @@ python -m http.server # または`npx serve -l 8000`
 ├── js/                   # ロジック（window.PortfolioLogic 名前空間に分割）
 │   ├── format.js         # 金額・%・色・価格・数量の整形ヘルパー
 │   ├── data.js           # 為替・金スポットのライブ取得、履歴の localStorage 蓄積、内蔵フォールバック
-│   ├── model.js          # 中核。ビューモデル構築（評価額集計・区分別ドーナツ・損益率ランキングなど）
+│   ├── model.js          # 中核。ビューモデル構築（評価額集計・区分別ドーナツなど）
 │   └── chart.js          # 資産推移グラフの SVG ジオメトリ生成
 ├── data/                 # ダッシュボードのデータソース
 │   ├── holdings.json     # 保有銘柄

@@ -161,19 +161,6 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 .pf-bars-tip-name { color: var(--pf-text-3); flex: 1; }
 .pf-bars-tip-v { font-weight: 700; }
 
-/* ===== MOVERS (損益率ランキング) ===== */
-.pf-movers-wrap { margin-bottom: 14px; }
-.pf-movers-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--pf-surface); border: 1px solid var(--pf-border); box-shadow: 0 1px 3px var(--pf-shadow); border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--pf-text-3); cursor: pointer; text-align: left; }
-.pf-movers-caret { font-size: 10px; color: var(--pf-muted); }
-.pf-movers { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 12px; }
-.pf-movers-col { background: var(--pf-surface); border: 1px solid var(--pf-border); box-shadow: 0 1px 3px var(--pf-shadow); border-radius: 16px; padding: clamp(13px,3vw,18px) clamp(14px,3.5vw,20px); }
-.pf-movers-head { font-size: 11px; color: var(--pf-muted); font-weight: 700; letter-spacing: .04em; margin-bottom: 7px; }
-.pf-mover-row { display: grid; grid-template-columns: 10px minmax(0,1fr) auto auto; gap: 10px; align-items: center; padding: 7px 0; border-top: 1px solid var(--pf-row-border); }
-.pf-mover-row:first-of-type { border-top: none; }
-.pf-mover-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; font-size: 13px; }
-.pf-mover-pct { font-weight: 800; font-size: 14px; text-align: right; }
-.pf-mover-gain { font-size: 11px; font-weight: 700; opacity: .8; text-align: right; min-width: 66px; }
-
 /* ===== SORT (テーブルヘッダのクリックで並び替え) ===== */
 .pf-th { display: flex; align-items: center; gap: 3px; cursor: pointer; user-select: none; }
 .pf-th--r { justify-content: flex-end; }
@@ -274,6 +261,7 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 .pf-panel-titles { display: flex; flex-direction: column; gap: 2px; }
 .pf-panel-title { font-weight: 800; font-size: 14px; color: var(--pf-text); }
 .pf-panel-sub { font-size: 11px; color: var(--pf-muted); font-weight: 600; }
+.pf-panel-caret { font-size: 10px; color: var(--pf-muted); }
 .pf-panel-body { padding: 2px 0 16px; }
 
 /* ===== 分析 / 暴落耐性分析 ===== */
