@@ -20,11 +20,13 @@ const QUOTE_URLS = {
 
 window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
   // 3区分（国内株/米国株/投資信託）の定義。色・名称の単一情報源（model/chart 共用）。
+  // 色は CSS 変数参照（styles.css で定義）。ライト/ダークで同一色相の別ステップへ切り替わり、
+  // data-theme 切替に追従する。背景色(inline style)・ドーナツ stroke(inline style) いずれも CSS 文脈で解決される。
   categories() {
     return [
-      { key: 'jp',   name: '国内株',   short: '国内', color: '#5b9bd5' },
-      { key: 'us',   name: '米国株',   short: '米国', color: '#5cc4a3' },
-      { key: 'fund', name: '投資信託', short: '投信', color: '#9b8cd4' },
+      { key: 'jp',   name: '国内株',   short: '国内', color: 'var(--pf-cat-jp)' },
+      { key: 'us',   name: '米国株',   short: '米国', color: 'var(--pf-cat-us)' },
+      { key: 'fund', name: '投資信託', short: '投信', color: 'var(--pf-cat-fund)' },
     ];
   },
   // 当日キー（YYYY-MM-DD）。日次蓄積・履歴差分で共用。
@@ -186,7 +188,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
           name: h.name, code: h.code, quoteUrl: h.quoteUrl, hasQuote: h.hasQuote,
           pctTxt: this.ratioPct(fc.evalNum > 0 ? h.evalJPY / fc.evalNum : 0),
           evalTxt: h.evalTxt,
-          swatch: this.hexA(fc.color, Math.max(1 - i * 0.14, 0.32)),
+          swatchColor: fc.color, swatchOp: Math.max(1 - i * 0.14, 0.32).toFixed(2),
           onEnter: () => this.setState({ hoverCat: 'h' + i }),
         })),
       });

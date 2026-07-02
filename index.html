@@ -291,7 +291,7 @@
             <g transform="rotate(-90 118 118)">
               <circle cx="118" cy="118" r="86" fill="none" stroke="var(--pf-donut-ring)" stroke-width="30"></circle>
               <sc-for list="{{ donut }}" as="seg" hint-placeholder-count="4">
-                <circle cx="118" cy="118" r="86" fill="none" stroke="{{ seg.color }}" stroke-width="30" stroke-dasharray="{{ seg.dash }}" stroke-dashoffset="{{ seg.offset }}" opacity="{{ seg.opacity }}" onMouseEnter="{{ seg.onEnter }}" onMouseLeave="{{ leaveCat }}" onClick="{{ seg.onClick }}" class="pf-donut-seg"></circle>
+                <circle cx="118" cy="118" r="86" fill="none" style="stroke:{{ seg.color }};" stroke-width="30" stroke-dasharray="{{ seg.dash }}" stroke-dashoffset="{{ seg.offset }}" opacity="{{ seg.opacity }}" onMouseEnter="{{ seg.onEnter }}" onMouseLeave="{{ leaveCat }}" onClick="{{ seg.onClick }}" class="pf-donut-seg"></circle>
               </sc-for>
             </g>
             <g class="pf-donut-labels">
@@ -350,7 +350,7 @@
           <div class="pf-drill-list">
             <sc-for list="{{ focusObj.holdingsLegend }}" as="hl" hint-placeholder-count="4">
               <div onMouseEnter="{{ hl.onEnter }}" onMouseLeave="{{ leaveCat }}" class="pf-drill-row" style-hover="background:var(--pf-row-hover);">
-                <div class="pf-swatch-sm" style="background:{{ hl.swatch }};"></div>
+                <div class="pf-swatch-sm" style="background:{{ hl.swatchColor }}; opacity:{{ hl.swatchOp }};"></div>
                 <sc-if value="{{ hl.hasQuote }}" hint-placeholder-val="{{ true }}">
                 <a class="pf-drill-rowname pf-quote-link" href="{{ hl.quoteUrl }}" target="_blank" rel="noopener noreferrer">{{ hl.name }} <span class="pf-code">{{ hl.code }}</span></a>
                 </sc-if>

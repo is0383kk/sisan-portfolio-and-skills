@@ -27,6 +27,11 @@
   --pf-track: #eef1f5;         /* ゲージのトラック */
   --pf-donut-ring: #f0f2f6;    /* ドーナツ背景リング */
   --pf-donut-text-stroke: #ffffff; /* 中央テキストの白縁（リングと重なっても可読に） */
+  /* カテゴリ色（国内株/米国株/投信）。ライトを既定とし、ダークは同一色相の暗ステップへ差し替える。
+     ダーク値は dataviz スキルの検証（明度帯 L0.48-0.67・彩度・CVD・対サーフェス3:1）を通過した色。 */
+  --pf-cat-jp: #5b9bd5;        /* 国内株 */
+  --pf-cat-us: #5cc4a3;        /* 米国株 */
+  --pf-cat-fund: #9b8cd4;      /* 投資信託 */
   --pf-toggle-active: #1f2733; /* アクティブトグルの背景 */
   --pf-on-accent: #ffffff;     /* 濃色面の上の文字 */
   --pf-accent: #5b9bd5;        /* リンク等のアクセント */
@@ -56,6 +61,9 @@
   --pf-track: #2a313c;
   --pf-donut-ring: #262d38;
   --pf-donut-text-stroke: #171c24;
+  --pf-cat-jp: #4a86c4;        /* 国内株（ダーク・検証済み） */
+  --pf-cat-us: #3ba081;        /* 米国株（ダーク・検証済み） */
+  --pf-cat-fund: #8571c9;      /* 投資信託（ダーク・検証済み） */
   --pf-toggle-active: #3a4555;
   --pf-on-accent: #ffffff;
   --pf-accent: #6aa9e0;
@@ -148,7 +156,10 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 .pf-bar-chart { position: relative; z-index: 1; display: flex; align-items: flex-end; gap: clamp(3px,1vw,10px); height: 100%; }
 .pf-bar-col { flex: 1 1 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; cursor: pointer; transition: opacity .15s; min-width: 0; }
 .pf-bar-stack { width: 100%; display: flex; flex-direction: column; border-radius: 3px 3px 0 0; overflow: hidden; }
-.pf-bar-seg { width: 100%; }
+/* 積み上げ区分の境界に 2px のサーフェス隙間を入れて塗り同士を分離する（境界線で区切らない）。
+   border-box により height% 内に収め、レイアウト（スタック総高）は不変に保つ。 */
+.pf-bar-seg { width: 100%; box-sizing: border-box; border-top: 2px solid var(--pf-surface); }
+.pf-bar-seg:first-child { border-top: 0; } /* スタック最上部は端であって境界ではない */
 .pf-bars-xticks { display: flex; gap: clamp(3px,1vw,10px); margin-top: 4px; }
 .pf-bars-xtick { flex: 1 1 0; text-align: center; font-size: 10px; color: var(--pf-muted); white-space: nowrap; overflow: hidden; min-width: 0; }
 .pf-bars-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; padding-left: 34px; }
