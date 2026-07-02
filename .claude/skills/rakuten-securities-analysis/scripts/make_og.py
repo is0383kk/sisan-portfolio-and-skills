@@ -6,6 +6,9 @@
 `js/model.js` の computeModel() 相当（評価額・損益・構成比・ドーナツ幾何・凡例）を Python
 側で再計算し、Pillow でカード 1 枚を直接 PNG へ描く。ブラウザ／サーバ不要で完結する。
 
+出力は OGP 標準比率の 1200x630（index.html の og:image:width/height と一致）。横長のカードを
+縦横比を保って中央へ置き、周囲を背景色で埋めることで、SNS 側の横圧縮による歪みを防ぐ。
+
 数値の出典は holdings.json の `usdRateFallback`（為替）であり、ライブ為替で描かれる実画面とは
 数百円〜千円ほどズレうる（構成比は一致する）。固定値で再現性を担保するための割り切り。
 
@@ -222,9 +225,17 @@ def render(model: dict, out_path: Path) -> Path:
         if c["gainPct"] is not None:
             _text_right(d, s(leg_x + leg_w), s(ry + 3), pct(c["gainPct"]), f_gpct, gcolor)
 
-    # 2x へ縮小してアンチエイリアスを効かせる
-    out = img.resize((CARD_W * 2, CARD_H * 2), Image.LANCZOS)
-    out.save(out_path)
+    # OGP 標準比率(1.91:1)の 1200x630 に収める。カード(860:300 の横長)を縦横比を保ったまま
+    # 中央へ配置し、周囲は --pf-bg で埋める。宣言サイズ(index.html の og:image:width/height=1200/630)
+    # と実サイズを一致させ、SNS 側で横方向に圧縮される歪み（左右から押された見え方）を防ぐ。
+    OUT_W, OUT_H = 1200, 630
+    MARGIN_X = 48
+    card_w = OUT_W - MARGIN_X * 2
+    card_h = int(round(card_w * CARD_H / CARD_W))
+    card = img.resize((card_w, card_h), Image.LANCZOS)  # SS 倍の高解像度から縮小してアンチエイリアス
+    canvas = Image.new("RGB", (OUT_W, OUT_H), (238, 241, 246))  # --pf-bg
+    canvas.paste(card, (MARGIN_X, (OUT_H - card_h) // 2))
+    canvas.save(out_path)
     return out_path
 
 
