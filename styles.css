@@ -226,6 +226,10 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 .pf-htable-head { display: grid; grid-template-columns: minmax(0,2.6fr) 1.1fr 1fr 1.3fr 1.4fr; gap: 8px; padding: 9px 12px; font-size: 11px; color: var(--pf-muted); font-weight: 700; border-bottom: 1px solid var(--pf-border); }
 .pf-htable-row { display: grid; grid-template-columns: minmax(0,2.6fr) 1.1fr 1fr 1.3fr 1.4fr; gap: 8px; padding: 12px; font-size: 13px; border-bottom: 1px solid var(--pf-row-border); align-items: center; }
 .pf-h-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 銘柄名を株価ページ(Yahoo!ファイナンス)へのリンクにする。色は本文を継承し、ホバーで下線＋アクセント色。 */
+.pf-quote-link { display: block; color: inherit; text-decoration: none; cursor: pointer; }
+.pf-quote-link:hover { color: var(--pf-accent); text-decoration: underline; text-underline-offset: 2px; }
+.pf-quote-link::after { content: "↗"; margin-left: 4px; font-size: .82em; opacity: .55; font-weight: 600; }
 .pf-h-sub { font-size: 11px; color: var(--pf-muted); margin-top: 1px; }
 .pf-h-gain { font-weight: 800; }
 .pf-h-gainpct { font-size: 11px; opacity: .8; }

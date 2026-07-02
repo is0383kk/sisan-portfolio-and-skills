@@ -351,7 +351,12 @@
             <sc-for list="{{ focusObj.holdingsLegend }}" as="hl" hint-placeholder-count="4">
               <div onMouseEnter="{{ hl.onEnter }}" onMouseLeave="{{ leaveCat }}" class="pf-drill-row" style-hover="background:var(--pf-row-hover);">
                 <div class="pf-swatch-sm" style="background:{{ hl.swatch }};"></div>
+                <sc-if value="{{ hl.hasQuote }}" hint-placeholder-val="{{ true }}">
+                <a class="pf-drill-rowname pf-quote-link" href="{{ hl.quoteUrl }}" target="_blank" rel="noopener noreferrer">{{ hl.name }} <span class="pf-code">{{ hl.code }}</span></a>
+                </sc-if>
+                <sc-if value="{{ !hl.hasQuote }}" hint-placeholder-val="{{ false }}">
                 <div class="pf-drill-rowname">{{ hl.name }} <span class="pf-code">{{ hl.code }}</span></div>
+                </sc-if>
                 <div class="pf-drill-pct">{{ hl.pctTxt }}</div>
                 <div class="pf-drill-eval2">{{ hl.evalTxt }}</div>
               </div>
@@ -401,7 +406,12 @@
               <sc-for list="{{ cat.holdings }}" as="h" hint-placeholder-count="3">
                 <div class="pf-htable-row" style-hover="background:var(--pf-row-hover-2);">
                   <div class="pf-min0">
+                    <sc-if value="{{ h.hasQuote }}" hint-placeholder-val="{{ true }}">
+                    <a class="pf-h-name pf-quote-link" href="{{ h.quoteUrl }}" target="_blank" rel="noopener noreferrer">{{ h.name }}</a>
+                    </sc-if>
+                    <sc-if value="{{ !h.hasQuote }}" hint-placeholder-val="{{ false }}">
                     <div class="pf-h-name">{{ h.name }}</div>
+                    </sc-if>
                     <div class="pf-h-sub">{{ h.code }} ・ {{ h.qtyTxt }}</div>
                   </div>
                   <div class="pf-num">{{ h.priceTxt }}</div>
@@ -418,7 +428,12 @@
               <sc-for list="{{ cat.holdings }}" as="h" hint-placeholder-count="3">
                 <div class="pf-hrow-m">
                   <div class="pf-hrow-m-top">
+                    <sc-if value="{{ h.hasQuote }}" hint-placeholder-val="{{ true }}">
+                    <a class="pf-hrow-m-name pf-quote-link" href="{{ h.quoteUrl }}" target="_blank" rel="noopener noreferrer">{{ h.name }} <span class="pf-code">{{ h.code }}</span></a>
+                    </sc-if>
+                    <sc-if value="{{ !h.hasQuote }}" hint-placeholder-val="{{ false }}">
                     <div class="pf-hrow-m-name">{{ h.name }} <span class="pf-code">{{ h.code }}</span></div>
+                    </sc-if>
                     <div class="pf-hrow-m-eval">{{ h.evalTxt }}</div>
                   </div>
                   <div class="pf-hrow-m-sub">

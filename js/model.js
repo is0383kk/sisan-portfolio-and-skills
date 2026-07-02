@@ -1,5 +1,23 @@
 // ポートフォリオ・ロジック：ドメイン計算（評価額・損益の集計、ドーナツ/凡例、サマリー）
 // computeModel() がテンプレート全体へ供給するモデルを構築する中核。
+
+// 銘柄名 → Yahoo!ファイナンス株価ページURL の対応表（単一情報源）。
+// code は「らくらく」がなかなか/じっくり両コースで重複するため、一意な name をキーにする。
+// enrich() が銘柄ごとに参照するため、再生成を避けてモジュールスコープの定数で保持する。
+const QUOTE_URLS = {
+  '任天堂': 'https://finance.yahoo.co.jp/quote/7974.T',
+  'マイクロン テクノロジー': 'https://finance.yahoo.co.jp/quote/MU',
+  'エヌビディア': 'https://finance.yahoo.co.jp/quote/NVDA',
+  'IonQ': 'https://finance.yahoo.co.jp/quote/IONQ',
+  'クレド・テクノロジー': 'https://finance.yahoo.co.jp/quote/CRDO',
+  'eMAXIS Slim 米国株式(S&P500)': 'https://finance.yahoo.co.jp/quote/03311187',
+  'eMAXIS Slim 全世界株式(オール・カントリー)': 'https://finance.yahoo.co.jp/quote/0331418A',
+  'iFreeNEXT FANG+インデックス': 'https://finance.yahoo.co.jp/quote/04311181',
+  '楽天・資産づくりファンド(なかなかコース)': 'https://finance.yahoo.co.jp/quote/9I313216',
+  '楽天・資産づくりファンド(じっくりコース)': 'https://finance.yahoo.co.jp/quote/9I312216',
+  '楽天・プラス・NASDAQ-100インデックス': 'https://finance.yahoo.co.jp/quote/9I314241',
+};
+
 window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
   // 3区分（国内株/米国株/投資信託）の定義。色・名称の単一情報源（model/chart 共用）。
   categories() {
@@ -11,6 +29,9 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
   },
   // 当日キー（YYYY-MM-DD）。日次蓄積・履歴差分で共用。
   todayKey() { return new Date().toISOString().slice(0, 10); },
+
+  // 銘柄の株価ページURL。QUOTE_URLS（モジュール定数）を引く。対応が無ければ null（テンプレート側でリンクなし表示に分岐）。
+  quoteUrlOf(h) { return QUOTE_URLS[h.name] || null; },
 
   computeModel() {
     // 設定・保有データ（data/holdings.json があれば優先、無ければ内蔵デフォルトと同一）
@@ -24,6 +45,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
     const enrich = (h) => {
       const per = h.per || 1;
       const rate = h.cur === 'USD' ? RATE : 1;
+      const quoteUrl = this.quoteUrlOf(h);
       const evalJPY = h.shares * h.price / per * rate;
       const costJPY = h.avg == null ? null : h.shares * h.avg / per * rate;
       const gain = costJPY == null ? null : evalJPY - costJPY;
@@ -32,6 +54,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       const monthYen = h.monthAbs == null ? null : h.monthAbs * h.shares / per * rate;
       return Object.assign({}, h, {
         evalJPY, costJPY, gain, gainPct, monthPct, monthYen,
+        quoteUrl, hasQuote: quoteUrl != null,
         priceTxt: this.priceFmt(h),
         qtyTxt: this.qtyFmt(h),
         evalTxt: this.yen(evalJPY),
@@ -160,7 +183,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       donutLabels = d.labels;
       focusObj = Object.assign({}, fc, {
         holdingsLegend: fc.holdings.map((h, i) => ({
-          name: h.name, code: h.code,
+          name: h.name, code: h.code, quoteUrl: h.quoteUrl, hasQuote: h.hasQuote,
           pctTxt: this.ratioPct(fc.evalNum > 0 ? h.evalJPY / fc.evalNum : 0),
           evalTxt: h.evalTxt,
           swatch: this.hexA(fc.color, Math.max(1 - i * 0.14, 0.32)),
