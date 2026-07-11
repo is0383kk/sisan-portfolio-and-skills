@@ -39,6 +39,51 @@ py "{SKILL_DIR}/scripts/nisa.py" "<入力CSVの絶対パス>"
 
 `{SKILL_DIR}` はこのスキル（SKILL.md）があるディレクトリ。
 
+## `data/nisa.json` を同時に更新する（`--json`）
+
+ダッシュボード（`index.html`）が読む `data/nisa.json` も、同じ CSV から同時にマージ更新できる。
+`--json` を付けると、Markdown レポートに加えて `data/nisa.json` を書き出す:
+
+```
+py "{SKILL_DIR}/scripts/nisa.py" "<入力CSVの絶対パス>" --json
+```
+
+- `--json` の値を **省略**すると、リポジトリの `data/nisa.json` を直接上書き更新する。
+- 上書き前に差分を確認したいときは、`--json` に一時パスを渡して出力先を分ける:
+  ```
+  py "{SKILL_DIR}/scripts/nisa.py" "<CSV>" --json "<一時パス>.json"
+  ```
+  既存（キュレーション元）は既定で `data/nisa.json` から読むため、一時パスへ出力しても
+  既存との突合は正しく行われる。読み込み元を明示するには `--nisa <絶対パス>` を付ける。
+- スクリプトは書き出した `data/nisa.json`（または `--json` のパス）と `NISA生涯枠_*.md` の
+  両方のパスを標準出力に返す。
+
+### holdings 更新と同じ「マージ方式」
+
+`data/holdings.json` 更新（`convert_holdings.py`）と同じ思想で、既存 `data/nisa.json` を
+**キュレーション情報源**として読み、CSV からは各エントリの `frame`（口座）と `cost`（簿価）
+だけを反映する。次は既存値を維持する:
+
+- `name`（表示名。CSV は「任　天　堂」のように全角スペース区切りだが、既存 JSON の整形済み
+  表示名を維持する。突合は半角・全角スペースを除去して照合する）
+- `limits`（生涯枠・成長枠・つみたて枠の上限）
+- `_comment`
+
+`cost`（簿価）は `NISA生涯枠_*.md` と同じく `簿価 = 時価評価額[円] - 評価損益[円]` で復元し、
+同一 `(frame, 銘柄名)` は合算する。旧「つみたてNISA」口座（`frame` 相当が別制度）は
+`data/nisa.json` には**出力しない**（生涯枠の対象外。Markdown 側の「参考」節にのみ載る）。
+
+### 差分の読み方（`--json` 使用時）
+
+`convert_holdings.py` と同様に、黙って銘柄を切り落とさない。次を `[warn]`（標準エラー）に
+列挙するので必ずユーザーに伝えること:
+
+- **除外**：既存 `nisa.json` にあり CSV の NISA 口座に無い銘柄。売却済みの可能性が高い。
+- **追加**：CSV にあり既存 `nisa.json` に無い銘柄。表示名は CSV の生値で追加されるため、
+  必要なら追加後に `name` を手動で整形する。
+
+`{SKILL_DIR}` はこのスキル（SKILL.md）があるディレクトリ。
+
 ### 起動コマンド・日付判定・文字化けの注意点（CSV変換と共通）
 
 入力ファイル名・出力ファイル名まわりの落とし穴は CSV→Markdown 変換と同じなので、

@@ -1,7 +1,9 @@
 """楽天証券「資産残高」CSV から NISA 非課税枠（生涯）の使用状況を算出して Markdown 化する。
 
 入力: 楽天証券のマイメニュー > 資産合計 > CSV出力 で得られる Shift-JIS の CSV。
-出力: 同じディレクトリに `NISA生涯枠_{yyyymmdd}.md` を生成する。
+出力:
+  - 同じディレクトリに `NISA生涯枠_{yyyymmdd}.md` を生成する（常時）。
+  - `--json` 指定時は、ダッシュボード用 `data/nisa.json` も同時にマージ更新する（後述）。
 
 算出の考え方:
   NISA の生涯枠（非課税保有限度額）は「簿価（取得価額）」で管理される。値上がり益は枠を
@@ -28,6 +30,7 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import json
 import re
 import sys
 from pathlib import Path
@@ -36,11 +39,17 @@ from pathlib import Path
 LIMIT_TOTAL = 18_000_000   # 生涯投資枠（合計）
 LIMIT_GROWTH = 12_000_000  # うち成長投資枠の上限
 # つみたて投資枠には単独の生涯上限が無い（生涯枠 1,800 万を全額つみたてに充てることも可能）。
+# ダッシュボードの nisa.json では tsumitate=600万（=1800万-1200万）として運用する。
+LIMIT_TSUMITATE = 6_000_000
 
 # 「口座」列の表記 -> 枠キー
 ACCOUNT_GROWTH = "NISA成長投資枠"
 ACCOUNT_TSUMITATE = "NISAつみたて投資枠"
 ACCOUNT_OLD_TSUMITATE = "つみたてNISA"
+
+# ダッシュボード用 data/nisa.json（このスクリプトからリポジトリの data/ を指す）。
+# scripts / rakuten-securities-analysis / skills / .claude / <repo-root>
+DEFAULT_NISA_JSON = Path(__file__).resolve().parents[4] / "data" / "nisa.json"
 
 
 def detect_date(csv_path: Path) -> str:
@@ -192,6 +201,142 @@ def build_markdown(entries: list[Entry], date: str) -> str:
     return "\n".join(out).rstrip() + "\n"
 
 
+_COMMENT_NISA_JSON = (
+    "新NISAの非課税枠（生涯）使用状況。cost=取得価額(簿価)[円]=時価評価額[円]-評価損益[円]"
+    "（楽天証券レポート基準。USD建ては取得時為替不明のため、この簿価で枠消費を確定）。"
+    "frame: tsumitate=NISAつみたて投資枠 / growth=NISA成長投資枠。※旧『つみたてNISA』は対象外。"
+    "limits: total=生涯非課税限度額(簿価1800万), growth=成長投資枠の上限(1200万), "
+    "tsumitate=つみたて投資枠の上限(600万=1800万-1200万として運用)。"
+)
+
+
+def build_nisa_json(
+    entries: list[Entry], nisa_path: Path
+) -> tuple[dict, list[str]]:
+    """CSV 由来の簿価で `data/nisa.json` をマージ更新した dict と警告リストを返す。
+
+    holdings.json と同じ「マージ方式」。既存 nisa.json を **キュレーション情報源**として読み、
+    銘柄の表示名（`name`）と枠上限（`limits`）は既存値を維持し、CSV からは各エントリの
+    `frame`（口座）と `cost`（簿価）だけを反映する。旧つみたてNISA（frame="old"）は
+    新NISA の生涯枠とは別制度なので nisa.json には出力しない。
+
+    突合キーは (frame, name)。CSV 側の名称は "…(オルカン)" のような別名が付くことがあるため、
+    完全一致 → 前方一致（既存名が CSV 名の先頭、またはその逆）で照合する。突合できた既存
+    エントリはその表示名を維持し、突合できなかった CSV 銘柄は素の CSV 名で追加して警告する。
+    """
+    warnings: list[str] = []
+
+    if nisa_path.is_file():
+        existing_doc = json.loads(nisa_path.read_text(encoding="utf-8"))
+    else:
+        existing_doc = {}
+    existing_entries = list(existing_doc.get("entries", []))
+
+    # CSV 側は同一 (frame, 銘柄名) を合算する（複数明細に分かれている場合に備える）。
+    csv_groups: dict[tuple[str, str], int] = {}
+    order: list[tuple[str, str]] = []
+    for e in entries:
+        if e.frame == "old":
+            continue  # 旧つみたてNISA は nisa.json 対象外
+        key = (e.frame, e.name)
+        if key not in csv_groups:
+            csv_groups[key] = 0
+            order.append(key)
+        csv_groups[key] += e.cost
+
+    def norm(s: str) -> str:
+        # 名称照合用の正規化。CSV は「任　天　堂」「マイクロン　テクノロジー」のように全角スペース
+        # 区切りで、既存 JSON は「任天堂」「マイクロン テクノロジー」と表記ゆれがあるため、
+        # 半角・全角スペースを除去してから比較する。
+        return (s or "").strip().replace(" ", "").replace("　", "")
+
+    def match_existing(frame: str, name: str, used: set[int]) -> int | None:
+        nn = norm(name)
+        # 同一 frame 内で完全一致（正規化後）→ 前方一致（正規化後）。
+        for i, h in enumerate(existing_entries):
+            if i in used or h.get("frame") != frame:
+                continue
+            if norm(h.get("name", "")) == nn:
+                return i
+        for i, h in enumerate(existing_entries):
+            if i in used or h.get("frame") != frame:
+                continue
+            hn = norm(h.get("name", ""))
+            if hn and (nn.startswith(hn) or hn.startswith(nn)):
+                return i
+        return None
+
+    used: set[int] = set()
+    matched: dict[int, dict] = {}
+    unmatched: list[tuple[str, str]] = []
+    for key in order:
+        frame, name = key
+        idx = match_existing(frame, name, used)
+        if idx is None:
+            unmatched.append(key)
+        else:
+            used.add(idx)
+            h = existing_entries[idx]
+            # 表示名は既存を維持し、簿価だけ CSV で更新。
+            matched[idx] = {"frame": frame, "name": h.get("name", name), "cost": csv_groups[key]}
+
+    # 出力順: 既存の並びを保ち、CSV に在った既存エントリを更新反映。CSV に無い既存は除外。
+    out_entries: list[dict] = []
+    for i, h in enumerate(existing_entries):
+        if i in matched:
+            out_entries.append(matched[i])
+        elif h.get("frame") in ("growth", "tsumitate"):
+            name = (h.get("name") or "").strip() or "(無名)"
+            warnings.append(
+                f"除外: 既存 nisa.json の「{name}」は CSV の NISA 口座に無いため出力しません（売却等の可能性）。"
+            )
+        # frame が growth/tsumitate 以外の旧データは黙って引き継がない（対象外）。
+
+    # CSV にあり既存に無い銘柄を追加。
+    for key in unmatched:
+        frame, name = key
+        out_entries.append({"frame": frame, "name": name, "cost": csv_groups[key]})
+        warnings.append(
+            f"追加: 新規銘柄「{name}」を CSV から nisa.json に追加しました（表示名の整形が必要なら手動で調整してください）。"
+        )
+
+    limits = existing_doc.get("limits") or {
+        "total": LIMIT_TOTAL,
+        "growth": LIMIT_GROWTH,
+        "tsumitate": LIMIT_TSUMITATE,
+    }
+    doc = {
+        "_comment": existing_doc.get("_comment", _COMMENT_NISA_JSON),
+        "limits": limits,
+        "entries": out_entries,
+    }
+    return doc, warnings
+
+
+def dump_nisa_json(doc: dict) -> str:
+    """既存 data/nisa.json のスタイル（limits と各 entry を 1 行）に合わせて整形する。
+
+    標準の json.dumps(indent=2) だと 1 要素ごとに複数行へ展開され、既存ファイルと差分が
+    大きくなる。手作業で維持してきた可読フォーマットを保つため、コンパクトに書き出す。
+    """
+    def one_line(obj: dict) -> str:
+        # 既存 nisa.json は `{ "k": v, ... }` とブレース内側にスペースを入れるスタイル。
+        s = json.dumps(obj, ensure_ascii=False, separators=(", ", ": "))
+        return "{ " + s[1:-1] + " }"
+
+    lines: list[str] = ["{"]
+    lines.append("  " + json.dumps("_comment", ensure_ascii=False) + ": "
+                 + json.dumps(doc["_comment"], ensure_ascii=False) + ",")
+    lines.append("  \"limits\": " + one_line(doc["limits"]) + ",")
+    lines.append("  \"entries\": [")
+    for i, e in enumerate(doc["entries"]):
+        sep = "," if i < len(doc["entries"]) - 1 else ""
+        lines.append("    " + one_line(e) + sep)
+    lines.append("  ]")
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="楽天証券 資産残高 CSV から NISA 生涯枠の使用状況を算出"
@@ -199,6 +344,23 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("input", help="入力 CSV（Shift-JIS / CP932）")
     parser.add_argument(
         "--out", help="出力先 .md パス（省略時は同ディレクトリに自動命名）"
+    )
+    parser.add_argument(
+        "--json",
+        nargs="?",
+        const="",
+        default=None,
+        help=(
+            "data/nisa.json も同時にマージ更新する。値を省略するとリポジトリの "
+            "data/nisa.json を上書き、パスを渡すとそのパスへ出力する（差分確認用の一時ファイルなど）。"
+        ),
+    )
+    parser.add_argument(
+        "--nisa",
+        help=(
+            "キュレーション情報源にする既存 nisa.json（既定: リポジトリの data/nisa.json）。"
+            "--json で一時ファイルへ出力する場合でも、既存はこのパスから読む。"
+        ),
     )
     args = parser.parse_args(argv)
 
@@ -216,6 +378,19 @@ def main(argv: list[str] | None = None) -> int:
         f"NISA生涯枠_{date}.md"
     )
     out_path.write_text(md, encoding="utf-8")
+
+    # --json 指定時のみ data/nisa.json をマージ更新する。
+    # 既存（キュレーション元）は --nisa（既定 DEFAULT）から読み、出力先は --json の値（省略時 DEFAULT）。
+    # convert_holdings.py の --holdings / --out と同じく読み書きを分離し、一時ファイル出力でも既存を読めるようにする。
+    if args.json is not None:
+        src_path = Path(args.nisa).resolve() if args.nisa else DEFAULT_NISA_JSON
+        json_out_path = Path(args.json).resolve() if args.json else DEFAULT_NISA_JSON
+        doc, warnings = build_nisa_json(entries, src_path)
+        json_out_path.write_text(dump_nisa_json(doc), encoding="utf-8")
+        for w in warnings:
+            print(f"[warn] {w}", file=sys.stderr)
+        print(str(json_out_path))
+
     print(str(out_path))
     return 0
 
