@@ -1,6 +1,6 @@
 {
-  "_comment": "楽天証券 資産状況(2026/07時点)を反映。米国株はcur:USD(priceはドル)。投信はper:10000(1万口あたり基準価額)。同一銘柄の複数口座は合算済み。monthAbs=当月price-前月price(1単位あたり前月比)。",
-  "usdRateFallback": 162.69,
+  "_comment": "楽天証券 資産状況(2026/07時点)を反映。米国株はcur:USD(priceはドル)。投信はper:10000(1万口あたり基準価額)。同一銘柄の複数口座は合算済み。monthAbs=1単位あたり前月比だが、CSVに前月比が無いため既存値を維持している。",
+  "usdRateFallback": 161.69,
   "holdings": [
     {
       "cat": "jp",
@@ -10,7 +10,7 @@
       "unit": "株",
       "shares": 10,
       "avg": 8851,
-      "price": 6980,
+      "price": 7030,
       "monthAbs": -20
     },
     {
@@ -21,7 +21,7 @@
       "unit": "株",
       "shares": 20,
       "avg": 117.115,
-      "price": 200.09,
+      "price": 210.96,
       "monthAbs": -10.6
     },
     {
@@ -32,7 +32,7 @@
       "unit": "株",
       "shares": 5,
       "avg": 362.75,
-      "price": 1154.29,
+      "price": 979.3,
       "monthAbs": 20.3
     },
     {
@@ -43,7 +43,7 @@
       "unit": "株",
       "shares": 30,
       "avg": 35,
-      "price": 53.26,
+      "price": 42.86,
       "monthAbs": -3.29
     },
     {
@@ -54,7 +54,7 @@
       "unit": "株",
       "shares": 4,
       "avg": 165.92,
-      "price": 271.95,
+      "price": 257.79,
       "monthAbs": 0.12
     },
     {
@@ -65,8 +65,8 @@
       "unit": "口",
       "per": 10000,
       "shares": 1670403,
-      "avg": 31232.59,
-      "price": 44399,
+      "avg": 31232.5865,
+      "price": 44958,
       "monthAbs": -19
     },
     {
@@ -76,22 +76,10 @@
       "cur": "JPY",
       "unit": "口",
       "per": 10000,
-      "shares": 994683,
-      "avg": 27982.79,
-      "price": 38017,
+      "shares": 1072970,
+      "avg": 28737.9888,
+      "price": 38334,
       "monthAbs": -200
-    },
-    {
-      "cat": "fund",
-      "name": "楽天・資産づくりファンド(なかなかコース)",
-      "code": "らくらく",
-      "cur": "JPY",
-      "unit": "口",
-      "per": 10000,
-      "shares": 306463,
-      "avg": 9789.11,
-      "price": 14016,
-      "monthAbs": 5
     },
     {
       "cat": "fund",
@@ -102,7 +90,7 @@
       "per": 10000,
       "shares": 158445,
       "avg": 18934.01,
-      "price": 19414,
+      "price": 19356,
       "monthAbs": -263
     },
     {
@@ -114,20 +102,8 @@
       "per": 10000,
       "shares": 5848,
       "avg": 51299.59,
-      "price": 91888,
+      "price": 95596,
       "monthAbs": -3768
-    },
-    {
-      "cat": "fund",
-      "name": "楽天・資産づくりファンド(じっくりコース)",
-      "code": "らくらく",
-      "cur": "JPY",
-      "unit": "口",
-      "per": 10000,
-      "shares": 32024,
-      "avg": 9367.97,
-      "price": 12273,
-      "monthAbs": 15
     }
   ]
 }

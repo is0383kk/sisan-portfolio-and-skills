@@ -1,5 +1,5 @@
 # Python dependencies for the rakuten-securities-analysis skill scripts.
-# convert.py / nisa.py rely only on the standard library (no external deps).
+# convert.py / nisa.py / convert_holdings.py rely only on the standard library.
 # make_og.py needs Pillow for drawing the OGP image (og.png).
 #
 # Install:  py -m pip install -r requirements.txt
