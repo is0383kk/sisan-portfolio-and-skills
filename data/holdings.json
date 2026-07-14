@@ -1,6 +1,6 @@
 {
   "_comment": "楽天証券 資産状況(2026/07時点)を反映。米国株はcur:USD(priceはドル)。投信はper:10000(1万口あたり基準価額)。同一銘柄の複数口座は合算済み。monthAbs=1単位あたり前月比だが、CSVに前月比が無いため既存値を維持している。",
-  "usdRateFallback": 161.69,
+  "usdRateFallback": 162.31,
   "holdings": [
     {
       "cat": "jp",
@@ -10,7 +10,7 @@
       "unit": "株",
       "shares": 10,
       "avg": 8851,
-      "price": 7030,
+      "price": 7075,
       "monthAbs": -20
     },
     {
@@ -21,7 +21,7 @@
       "unit": "株",
       "shares": 20,
       "avg": 117.115,
-      "price": 210.96,
+      "price": 203.5284,
       "monthAbs": -10.6
     },
     {
@@ -32,7 +32,7 @@
       "unit": "株",
       "shares": 5,
       "avg": 362.75,
-      "price": 979.3,
+      "price": 937,
       "monthAbs": 20.3
     },
     {
@@ -43,7 +43,7 @@
       "unit": "株",
       "shares": 30,
       "avg": 35,
-      "price": 42.86,
+      "price": 38.88,
       "monthAbs": -3.29
     },
     {
@@ -54,7 +54,7 @@
       "unit": "株",
       "shares": 4,
       "avg": 165.92,
-      "price": 257.79,
+      "price": 236.88,
       "monthAbs": 0.12
     },
     {
@@ -66,7 +66,7 @@
       "per": 10000,
       "shares": 1670403,
       "avg": 31232.5865,
-      "price": 44958,
+      "price": 45148,
       "monthAbs": -19
     },
     {
@@ -78,7 +78,7 @@
       "per": 10000,
       "shares": 1072970,
       "avg": 28737.9888,
-      "price": 38334,
+      "price": 38432,
       "monthAbs": -200
     },
     {
@@ -90,7 +90,7 @@
       "per": 10000,
       "shares": 158445,
       "avg": 18934.01,
-      "price": 19356,
+      "price": 19418,
       "monthAbs": -263
     },
     {
@@ -102,7 +102,7 @@
       "per": 10000,
       "shares": 5848,
       "avg": 51299.59,
-      "price": 95596,
+      "price": 95905,
       "monthAbs": -3768
     }
   ]
