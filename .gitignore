@@ -2,3 +2,4 @@
 docs
 CLAUDE.md
 playwright.json
+.playwright-mcp/

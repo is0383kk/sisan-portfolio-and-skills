@@ -707,6 +707,11 @@
 
           <!-- ---- ドローダウン / 変動性分析 ---- -->
           <sc-if value="{{ ap.isDrawdown }}" hint-placeholder-val="{{ false }}">
+          <div class="pf-toggle-group pf-future-modes">
+            <sc-for list="{{ drawdown.catTabs }}" as="ct" hint-placeholder-count="4">
+              <button onClick="{{ ct.onClick }}" class="pf-tbtn pf-tbtn--r" style="background:{{ ct.bg }}; color:{{ ct.color }};">{{ ct.label }}</button>
+            </sc-for>
+          </div>
           <sc-if value="{{ drawdown.hasData }}" hint-placeholder-val="{{ true }}">
           <div class="pf-dd-stats">
             <div class="pf-dd-stat">
@@ -730,7 +735,7 @@
               <span class="pf-dd-sub">最良 {{ drawdown.bestTxt }} / 最悪 {{ drawdown.worstTxt }}</span>
             </div>
           </div>
-          <div class="pf-dd-chart-label">アンダーウォーター（最高値からの下落率推移）</div>
+          <div class="pf-dd-chart-label">アンダーウォーター（{{ drawdown.catName }}・最高値からの下落率推移）</div>
           <sc-if value="{{ drawdown.hasChart }}" hint-placeholder-val="{{ true }}">
           <div>
             <div class="pf-chart-pos">
@@ -808,6 +813,7 @@ class Component extends DCLogic {
       rebalTargets: null, // リバランス：区分別の目標配分(%)。null のとき現在配分を既定（ズレゼロ）。
       mixHover: null,
       ddHover: null, // アンダーウォーター図（ドローダウン/変動性分析）のホバー中データ点インデックス。
+      ddCat: 'all', // ドローダウン/変動性分析の対象カテゴリ。'all'(全体) / 'jp' / 'us' / 'fund'。
       liveRate: null,
       rateTime: null,
       rateStatus: 'idle',

@@ -607,13 +607,37 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
   // buildChart と同じく各月(YYYY-MM)の最新1点へ集約した系列を使う（暴落耐性分析の「実測版」）。
   // 履歴が2点未満のときは hasData=false でメッセージ表示。
   computeDrawdown() {
-    let series = this.readValHist().filter((s) => s && s.d && s.total != null).sort((a, b) => (a.d < b.d ? -1 : 1));
+    // カテゴリ切替：全体（評価額 total）または各区分（cats[key]）を系列値に使う。state.ddCat（既定 'all'）。
+    // 「全体」を残しつつ、国内株/米国株/投資信託の区分ごとにドローダウン・変動性を算出できる。
+    const CATS = this.categories();
+    const cat = this.state.ddCat || 'all';
+    const catDefs = [{ k: 'all', l: '全体' }].concat(CATS.map((c) => ({ k: c.key, l: c.short })));
+    const catTabs = catDefs.map((t) => ({
+      label: t.l, onClick: () => this.setState({ ddCat: t.k, ddHover: null }),
+      bg: cat === t.k ? 'var(--pf-toggle-active)' : 'transparent',
+      color: cat === t.k ? 'var(--pf-on-accent)' : 'var(--pf-text-2)',
+    }));
+    const catName = cat === 'all' ? '全体' : ((CATS.find((c) => c.key === cat) || {}).name || '');
+    // 全体は total、区分別は cats[key]。区分別で値が 0 以下の点＝その区分を未保有だった期間は対象外にする
+    // （ゼロ期間を含めると 0→初回保有 の立ち上がりが擬似的な巨大リターンとなり、DD・ボラが歪むため）。
+    const valOf = (s) => {
+      if (cat === 'all') return s.total;
+      if (!s.cats) return null;
+      const v = s.cats[cat];
+      return v > 0 ? v : null;
+    };
+    const base = { has: true, catTabs, catName };
+
+    let series = this.readValHist().filter((s) => s && s.d && valOf(s) != null).sort((a, b) => (a.d < b.d ? -1 : 1));
     series = this.aggregateByMonth(series);
     if (series.length < 2) {
-      return { has: true, hasData: false, emptyMsg: '月次の評価額履歴が2点以上たまると、ドローダウンと変動性を分析できます。' };
+      return Object.assign(base, {
+        hasData: false,
+        emptyMsg: (cat === 'all' ? '月次の評価額履歴' : catName + 'の月次履歴') + 'が2点以上たまると、ドローダウンと変動性を分析できます。',
+      });
     }
 
-    const vals = series.map((s) => s.total);
+    const vals = series.map(valOf);
     // 過去最高値(running peak)からの下落率を各点で算出し、最大ドローダウンとその区間を記録。
     let peak = vals[0], curPeakIdx = 0, maxDD = 0, ddPeakIdx = 0, ddTroughIdx = 0;
     const ddSeries = [];
@@ -671,8 +695,8 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       };
     }
 
-    return {
-      has: true, hasData: true,
+    return Object.assign(base, {
+      hasData: true,
       maxDDTxt: this.pct(-maxDD * 100),
       maxDDRangeTxt: fmtD(series[ddPeakIdx].d) + ' → ' + fmtD(series[ddTroughIdx].d),
       curDDTxt: this.pct(-curDD * 100), curDDColor: this.col(-curDD),
@@ -683,7 +707,7 @@ window.PortfolioLogic = Object.assign(window.PortfolioLogic || {}, {
       accent: '#d75049', hasChart: n >= 2, linePts, areaPath, xticks, tip,
       // ホバーは資産推移グラフと共通の hoverNearest を使う（最寄り点を ddHover へ設定）。
       hit: { move: (e) => this.hoverNearest(e, this._ddN | 0, 'ddHover'), leave: () => { if (this.state.ddHover != null) this.setState({ ddHover: null }); } },
-    };
+    });
   },
 
   // 分析パネル（アコーディオン）。各項目を独立に開閉でき、複数同時展開も可能（state.openPanels）。デフォルトは全て閉じ。
