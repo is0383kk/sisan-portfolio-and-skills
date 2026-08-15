@@ -1,6 +1,6 @@
 {
   "_comment": "楽天証券 資産状況(2026/08時点)を反映。米国株はcur:USD(priceはドル)。投信はper:10000(1万口あたり基準価額)。同一銘柄の複数口座は合算済み。monthAbs=1単位あたり前月比だが、CSVに前月比が無いため既存値を維持している。",
-  "usdRateFallback": 157.81,
+  "usdRateFallback": 159.32,
   "holdings": [
     {
       "cat": "jp",
@@ -10,7 +10,7 @@
       "unit": "株",
       "shares": 10,
       "avg": 8851,
-      "price": 7679,
+      "price": 8900,
       "monthAbs": -20
     },
     {
@@ -21,7 +21,7 @@
       "unit": "株",
       "shares": 20,
       "avg": 117.115,
-      "price": 200.75,
+      "price": 225.16,
       "monthAbs": -10.6
     },
     {
@@ -32,7 +32,7 @@
       "unit": "株",
       "shares": 5,
       "avg": 362.75,
-      "price": 823.03,
+      "price": 971.66,
       "monthAbs": 20.3
     },
     {
@@ -43,7 +43,7 @@
       "unit": "株",
       "shares": 30,
       "avg": 35,
-      "price": 36.44,
+      "price": 46.26,
       "monthAbs": -3.29
     },
     {
@@ -54,7 +54,7 @@
       "unit": "株",
       "shares": 4,
       "avg": 165.92,
-      "price": 206.99,
+      "price": 259.9,
       "monthAbs": 0.12
     },
     {
@@ -66,7 +66,7 @@
       "per": 10000,
       "shares": 1670403,
       "avg": 31232.5865,
-      "price": 43950,
+      "price": 45727,
       "monthAbs": -19
     },
     {
@@ -76,9 +76,9 @@
       "cur": "JPY",
       "unit": "口",
       "per": 10000,
-      "shares": 1072970,
-      "avg": 28737.9888,
-      "price": 37521,
+      "shares": 1072997,
+      "avg": 28738.2002,
+      "price": 39019,
       "monthAbs": -200
     },
     {
@@ -90,7 +90,7 @@
       "per": 10000,
       "shares": 158445,
       "avg": 18934.01,
-      "price": 18139,
+      "price": 19260,
       "monthAbs": -263
     },
     {
@@ -102,8 +102,19 @@
       "per": 10000,
       "shares": 5848,
       "avg": 51299.59,
-      "price": 91805,
+      "price": 101036,
       "monthAbs": -3768
+    },
+    {
+      "cat": "jp",
+      "name": "イオン",
+      "code": "8267",
+      "cur": "JPY",
+      "unit": "株",
+      "shares": 100,
+      "avg": 1360,
+      "price": 1374,
+      "monthAbs": 0
     }
   ]
 }

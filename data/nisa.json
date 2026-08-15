@@ -3,14 +3,14 @@
   "limits": { "total": 18000000, "growth": 12000000, "tsumitate": 6000000 },
   "entries": [
     { "frame": "tsumitate", "name": "eMAXIS Slim 米国株式(S&P500)", "cost": 1782000 },
-    { "frame": "tsumitate", "name": "eMAXIS Slim 全世界株式(オール・カントリー)", "cost": 1781500 },
+    { "frame": "tsumitate", "name": "eMAXIS Slim 全世界株式(オール・カントリー)", "cost": 1781601 },
     { "frame": "growth", "name": "任天堂", "cost": 88510 },
     { "frame": "growth", "name": "エヌビディア", "cost": 356890 },
     { "frame": "growth", "name": "マイクロン テクノロジー", "cost": 287388 },
     { "frame": "growth", "name": "IonQ", "cost": 165648 },
     { "frame": "growth", "name": "クレド・テクノロジー", "cost": 106560 },
     { "frame": "growth", "name": "楽天・プラス・NASDAQ-100インデックス", "cost": 300000 },
-    { "frame": "growth", "name": "eMAXIS Slim 米国株式(S&P500)", "cost": 3135100 },
+    { "frame": "growth", "name": "eMAXIS Slim 米国株式(S&P500)", "cost": 3135101 },
     { "frame": "growth", "name": "eMAXIS Slim 全世界株式(オール・カントリー)", "cost": 1302000 },
     { "frame": "growth", "name": "iFreeNEXT FANG+インデックス", "cost": 30000 }
   ]
