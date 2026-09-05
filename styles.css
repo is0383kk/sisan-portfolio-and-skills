@@ -106,10 +106,12 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 
 /* ===== HEADER ===== */
 .pf-topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
-.pf-brand { display: flex; align-items: center; gap: 13px; }
+.pf-brand { display: flex; align-items: flex-end; gap: 13px; }
 .pf-logo { width: 42px; height: 42px; border-radius: 13px; background: linear-gradient(135deg,#5b9bd5,#9b8cd4); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 17px; letter-spacing: .02em; }
 .pf-brand-label { font-size: 10.5px; letter-spacing: .16em; color: var(--pf-muted); font-weight: 700; }
 .pf-brand-title { font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+.pf-brand-cal { display: inline-flex; align-items: center; gap: 5px; text-decoration: none; border: 1px solid var(--pf-border-strong); background: var(--pf-surface); color: var(--pf-text-2); border-radius: 9px; padding: 6px 12px; font-size: 12px; font-weight: 700; white-space: nowrap; transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
+.pf-brand-cal:hover { background: var(--pf-surface-2); color: var(--pf-text); border-color: var(--pf-accent); }
 .pf-meta { text-align: right; font-size: 12px; color: var(--pf-text-3); line-height: 1.7; }
 .pf-meta-rate { display: flex; align-items: center; justify-content: flex-end; gap: 7px; margin-top: 2px; }
 .pf-meta-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--pf-muted); }
