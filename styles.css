@@ -86,6 +86,10 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 .pf-theme-toggle { position: fixed; top: 14px; right: 14px; z-index: 1000; width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--pf-border); background: var(--pf-surface); box-shadow: 0 1px 3px var(--pf-shadow); color: var(--pf-text); font-size: 17px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease; }
 .pf-theme-toggle:hover { box-shadow: 0 2px 8px var(--pf-shadow-2); }
 
+/* ページ間の導線アイコン（テーマ切替の左隣に固定）。pf-nav-cal=カレンダーへ / pf-nav-home=ポートフォリオへ */
+.pf-nav-cal, .pf-nav-home { position: fixed; top: 14px; right: 60px; z-index: 1000; width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--pf-border); background: var(--pf-surface); box-shadow: 0 1px 3px var(--pf-shadow); color: var(--pf-text); font-size: 17px; line-height: 1; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.pf-nav-cal:hover, .pf-nav-home:hover { box-shadow: 0 2px 8px var(--pf-shadow-2); border-color: var(--pf-accent); }
+
 /* ===== SCROLL TO TOP （x-dc の外に置く固定ボタン。一定量スクロールで表示） ===== */
 .pf-totop { position: fixed; bottom: 20px; right: 14px; z-index: 1000; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--pf-border); background: var(--pf-surface); box-shadow: 0 1px 3px var(--pf-shadow); color: var(--pf-text); font-size: 19px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, opacity .2s ease, visibility .2s ease, transform .2s ease; opacity: 0; visibility: hidden; transform: translateY(8px); }
 .pf-totop.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
@@ -106,12 +110,10 @@ body { font-family: 'Manrope', 'Noto Sans JP', sans-serif; background: var(--pf-
 
 /* ===== HEADER ===== */
 .pf-topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
-.pf-brand { display: flex; align-items: flex-end; gap: 13px; }
+.pf-brand { display: flex; align-items: center; gap: 13px; }
 .pf-logo { width: 42px; height: 42px; border-radius: 13px; background: linear-gradient(135deg,#5b9bd5,#9b8cd4); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 17px; letter-spacing: .02em; }
 .pf-brand-label { font-size: 10.5px; letter-spacing: .16em; color: var(--pf-muted); font-weight: 700; }
 .pf-brand-title { font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
-.pf-brand-cal { display: inline-flex; align-items: center; gap: 5px; text-decoration: none; border: 1px solid var(--pf-border-strong); background: var(--pf-surface); color: var(--pf-text-2); border-radius: 9px; padding: 6px 12px; font-size: 12px; font-weight: 700; white-space: nowrap; transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
-.pf-brand-cal:hover { background: var(--pf-surface-2); color: var(--pf-text); border-color: var(--pf-accent); }
 .pf-meta { text-align: right; font-size: 12px; color: var(--pf-text-3); line-height: 1.7; }
 .pf-meta-rate { display: flex; align-items: center; justify-content: flex-end; gap: 7px; margin-top: 2px; }
 .pf-meta-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--pf-muted); }

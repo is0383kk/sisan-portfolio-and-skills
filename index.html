@@ -46,6 +46,8 @@
 <script src="./js/chart.js"></script>
 </head>
 <body>
+<!-- 年間カレンダーへの導線（x-dc の外＝テーマ切替と同じく Reactランタイム管理外に固定配置） -->
+<a id="pf-nav-cal" class="pf-nav-cal" href="./calendar.html" aria-label="年間カレンダー" title="年間重要イベントカレンダーを開く">📅</a>
 <!-- テーマ切替トグル（x-dc の外＝Reactランタイム管理外に置き、再描画の影響を受けないようにする） -->
 <button id="pf-theme-toggle" class="pf-theme-toggle" type="button" aria-label="テーマ切替" title="ライト / ダーク切替"></button>
 <script>
@@ -114,7 +116,6 @@
           <div class="pf-brand-label">MY PORTFOLIO</div>
           <div class="pf-brand-title">資産ポートフォリオサンプル</div>
         </div>
-        <a class="pf-brand-cal" href="./calendar.html" target="_blank" rel="noopener" title="年間重要イベントカレンダーを新しいタブで開く">📅 年間カレンダー</a>
       </div>
       <sc-if value="{{ desktopView }}" hint-placeholder-val="{{ true }}">
       <div class="pf-meta">
