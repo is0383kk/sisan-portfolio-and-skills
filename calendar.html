@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>年間重要イベントカレンダー</title>
+<meta name="description" content="日本株・米国株・為替・金利等を分析する際の年間の季節性・需給・金融政策・決算イベントをまとめた年間重要イベントカレンダー（国内版／米国版）。">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+<script>
+// テーマ初期化（FOUC回避）：index.html と同じ localStorage キー（pf-theme）を共有し、
+// styles.css 適用前に <html data-theme> を確定させて初期描画のちらつきを防ぐ。
+(function () {
+  try {
+    var saved = localStorage.getItem('pf-theme');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = saved || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<style>
+/* このページ専用スタイル。構造色は styles.css の var(--pf-*) を再利用する。 */
+.cal-page { min-height: 100vh; padding: 28px 16px 64px; }
+.cal-wrap { max-width: 1080px; margin: 0 auto; }
+.cal-topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.cal-heading { display: flex; flex-direction: column; gap: 4px; }
+.cal-label { font-size: 10.5px; letter-spacing: .16em; color: var(--pf-muted); font-weight: 700; }
+.cal-title { font-size: 20px; font-weight: 800; letter-spacing: -.01em; color: var(--pf-text); }
+
+.cal-tabs { display: inline-flex; gap: 4px; background: var(--pf-surface-2); border-radius: 11px; padding: 4px; margin-bottom: 16px; }
+.cal-tab { border: none; background: transparent; color: var(--pf-text-2); border-radius: 8px; padding: 8px 18px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: background-color .15s ease, color .15s ease; }
+.cal-tab.is-active { background: var(--pf-toggle-active); color: var(--pf-on-accent); box-shadow: 0 1px 3px var(--pf-shadow); }
+
+/* 傾向記号の色（↑緑／↓赤／↕黄／→青）。ライト/ダークで可読な明度に調整。 */
+.cal-up   { color: #16a34a; font-weight: 800; }
+.cal-down { color: #dc2626; font-weight: 800; }
+.cal-flat { color: #ca8a04; font-weight: 800; }
+.cal-none { color: #2563eb; font-weight: 800; }
+[data-theme="dark"] .cal-up   { color: #4ade80; }
+[data-theme="dark"] .cal-down { color: #f87171; }
+[data-theme="dark"] .cal-flat { color: #facc15; }
+[data-theme="dark"] .cal-none { color: #60a5fa; }
+
+/* 記号レジェンド */
+.cal-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 16px; padding: 12px 14px; background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: 12px; }
+.cal-legend-item { font-size: 11.5px; color: var(--pf-text-2); }
+.cal-legend-sym { display: inline-block; min-width: 1.6em; font-weight: 800; color: var(--pf-text); }
+
+/* ============================================================
+   月次アルマナック（ledger）— 各月を1つの帯として縦に連ねる。
+   左端の「背骨」の濃さ＝重要度。年間の季節性の強弱を左端の流れで一望できる。
+   ============================================================ */
+.cal-card { --cal-imp: #4d86bf; background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: 16px; box-shadow: 0 1px 3px var(--pf-shadow); overflow: hidden; }
+[data-theme="dark"] .cal-card { --cal-imp: #6aa9e0; }  /* 重要度アクセント */
+
+.cal-ledger { display: flex; flex-direction: column; }
+
+/* 見出し行（列ラベル）— デスクトップのみ */
+.cal-lhead { display: grid; grid-template-columns: 108px 1fr minmax(248px, 33%); gap: 24px; padding: 14px 22px; }
+.cal-lhead span { font-size: 10.5px; letter-spacing: .12em; color: var(--pf-muted); font-weight: 700; text-transform: uppercase; }
+
+/* 月の帯 */
+.cal-month { display: grid; grid-template-columns: 108px 1fr minmax(248px, 33%); gap: 24px; padding: 30px 22px; border-top: 1px solid var(--pf-row-border); position: relative; }
+.cal-month::before { content: ""; position: absolute; left: 0; top: -1px; bottom: -1px; width: 3px;
+  background: color-mix(in srgb, var(--cal-imp) calc(var(--w, 40) * 1%), transparent); }
+.cal-month:first-child { border-top: none; }
+.cal-month:hover { background: var(--pf-row-hover); }
+.cal-month.w-100::before { width: 4px; }
+
+/* 左：月＋重要度 */
+.cal-spine { display: flex; flex-direction: column; gap: 7px; }
+.cal-mnum { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 30px; line-height: 1; letter-spacing: -.02em; color: var(--pf-text); font-variant-numeric: tabular-nums; }
+.cal-mnum small { font-size: 13px; font-weight: 700; color: var(--pf-text-3); margin-left: 2px; }
+.cal-stars { font-size: 12px; letter-spacing: 1px; line-height: 1; }
+.cal-stars .on { color: var(--cal-imp); }
+.cal-stars .off { color: var(--pf-track); }
+.cal-stars .plus { color: var(--cal-imp); font-weight: 800; font-size: 13px; margin-left: 1px; }
+
+/* 中：イベント＋なぜ */
+.cal-main { display: flex; flex-direction: column; gap: 11px; min-width: 0; }
+.cal-events { display: flex; flex-direction: column; gap: 8px; }
+.cal-events .ev { font-size: 13px; line-height: 1.7; color: var(--pf-text); padding-left: 14px; position: relative; }
+.cal-events .ev::before { content: ""; position: absolute; left: 2px; top: .72em; width: 4px; height: 4px; border-radius: 50%; background: var(--pf-faint); }
+.cal-events .ev strong { font-weight: 700; color: var(--pf-text); }
+.cal-why { font-size: 12px; line-height: 1.65; color: var(--pf-text-3); border-top: 1px dashed var(--pf-border-strong); padding-top: 9px; }
+.cal-why strong { color: var(--pf-text-2); font-weight: 700; }
+
+/* 右：傾向 */
+.cal-trend { display: flex; flex-direction: column; gap: 9px; }
+.cal-trow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 12px; line-height: 1.7; }
+.cal-tlabel { color: var(--pf-text-2); font-weight: 700; flex: 0 1 auto; }
+.cal-tval { color: var(--pf-text-3); text-align: right; flex: 1 1 auto; white-space: nowrap; }
+.cal-tval .cal-up, .cal-tval .cal-down, .cal-tval .cal-flat, .cal-tval .cal-none { font-size: 13px; }
+
+.cal-note { margin-top: 16px; font-size: 11.5px; color: var(--pf-muted); line-height: 1.7; }
+.cal-state { padding: 40px 16px; text-align: center; color: var(--pf-muted); font-size: 13px; }
+
+@media (max-width: 720px) {
+  .cal-page { padding: 20px 10px 48px; }
+  .cal-title { font-size: 17px; }
+  .cal-lhead { display: none; }
+  .cal-month { grid-template-columns: 1fr; gap: 14px; padding: 18px 16px 18px 18px; }
+  .cal-spine { flex-direction: row; align-items: baseline; gap: 12px; }
+  .cal-mnum { font-size: 24px; }
+  .cal-trend { border-top: 1px dashed var(--pf-border-strong); padding-top: 11px; }
+}
+</style>
+</head>
+<body>
+<!-- ポートフォリオへ戻る導線（テーマ切替の左隣に固定。index.html の pf-nav-cal と対をなす） -->
+<a id="pf-nav-home" class="pf-nav-home" href="./index.html" aria-label="ポートフォリオへ戻る" title="ポートフォリオへ戻る">🏠</a>
+<button id="pf-theme-toggle" class="pf-theme-toggle" type="button" aria-label="テーマ切替" title="ライト / ダーク切替"></button>
+<script>
+// テーマ切替トグル（index.html と同一挙動・同一 localStorage キー）
+(function () {
+  var btn = document.getElementById('pf-theme-toggle');
+  if (!btn) return;
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function current() { return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+  function apply(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    btn.textContent = theme === 'dark' ? '☾' : '☀';
+  }
+  apply(current());
+  btn.addEventListener('click', function () {
+    var next = current() === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('pf-theme', next); } catch (e) {}
+    apply(next);
+  });
+  if (mq && mq.addEventListener) {
+    mq.addEventListener('change', function (e) {
+      var saved;
+      try { saved = localStorage.getItem('pf-theme'); } catch (err) { saved = null; }
+      if (!saved) apply(e.matches ? 'dark' : 'light');
+    });
+  }
+})();
+</script>
+
+<div class="cal-page">
+  <div class="cal-wrap">
+    <div class="cal-topbar">
+      <div class="cal-heading">
+        <div class="cal-label">MARKET CALENDAR</div>
+        <div class="cal-title">年間重要イベントカレンダー</div>
+      </div>
+    </div>
+
+    <div class="cal-tabs" id="cal-tabs" role="tablist">
+      <button class="cal-tab is-active" data-key="jp" role="tab" aria-selected="true">国内版</button>
+      <button class="cal-tab" data-key="us" role="tab" aria-selected="false">米国版</button>
+    </div>
+
+    <div class="cal-legend" aria-label="傾向カラムの記号">
+      <span class="cal-legend-item"><span class="cal-legend-sym cal-up">↑</span>上昇しやすい</span>
+      <span class="cal-legend-item"><span class="cal-legend-sym cal-down">↓</span>下落しやすい</span>
+      <span class="cal-legend-item"><span class="cal-legend-sym cal-flat">↕</span>値動き拡大</span>
+      <span class="cal-legend-item"><span class="cal-legend-sym cal-none">→</span>明確な季節性なし</span>
+      <span class="cal-legend-item"><span class="cal-legend-sym cal-up">↑↑</span>比較的強い上昇季節性</span>
+      <span class="cal-legend-item"><span class="cal-legend-sym cal-down">↓↓</span>比較的強い下落季節性</span>
+      <span class="cal-legend-item"><span class="cal-legend-sym cal-flat">↕↕</span>通常より大きな値動きに注意</span>
+    </div>
+
+    <div class="cal-card">
+      <div id="cal-body">
+        <div class="cal-state">読み込み中…</div>
+      </div>
+    </div>
+
+    <p class="cal-note">
+      傾向は過去の季節性と一般的なイベント感応度をまとめたもので、<strong>売買シグナルではありません</strong>。
+      FOMC・日銀会合・CPI・雇用統計・決算・SQ 等の具体的な開催日は毎年変わるため、実際の分析時には最新の日程を確認してください。
+    </p>
+  </div>
+</div>
+
+<script>
+// ------------------------------------------------------------------
+// マークダウン（chat-gpt/年間重要イベントカレンダー_*.md）の
+// 「## 年間カレンダー」直後のテーブルのみを取り出して描画する。
+// マークダウンを単一情報源とし、この画面はビューに徹する。
+// ------------------------------------------------------------------
+(function () {
+  var SOURCES = {
+    jp: 'chat-gpt/年間重要イベントカレンダー_国内版.md',
+    us: 'chat-gpt/年間重要イベントカレンダー_米国版.md'
+  };
+  var cache = {};       // key -> HTMLString（描画済みテーブル）
+  var current = 'jp';
+  var body = document.getElementById('cal-body');
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  // インライン記法を安全に変換：エスケープ→**bold**→傾向記号に配色。
+  // <br> は含まない前提（呼び出し側で splitBr により分割済み）。
+  function inline(raw) {
+    var html = escapeHtml(raw);
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); // **bold**
+    // 傾向記号に配色（↑緑／↓赤／↕黄／→青）。↑↑等の連続はグリフ単位で着色される。
+    html = html.replace(/↑/g, '<span class="cal-up">↑</span>')
+               .replace(/↓/g, '<span class="cal-down">↓</span>')
+               .replace(/↕/g, '<span class="cal-flat">↕</span>')
+               .replace(/→/g, '<span class="cal-none">→</span>');
+    html = html.replace(/\*\*/g, ''); // 対にならず残った ** を除去（部分太字セル対策）
+    return html;
+  }
+  // <br> でセグメント分割（前後空白除去、空要素は除外）
+  function splitBr(raw) {
+    return raw.split(/<br\s*\/?>/i).map(function (s) { return s.trim(); })
+              .filter(function (s) { return s.length; });
+  }
+  function stripBold(s) {
+    return s.trim().replace(/^\*\*/, '').replace(/\*\*$/, '').trim();
+  }
+  function splitRow(line) {
+    // 前後の | を落としてセル分割（セル内に | は出現しない前提）
+    var t = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+    return t.split('|').map(function (c) { return c.trim(); });
+  }
+  function isSeparator(cells) {
+    return cells.every(function (c) { return /^:?-{2,}:?$/.test(c.replace(/\s/g, '')); });
+  }
+
+  // 「## 年間カレンダー」セクション内の最初のテーブルを抽出
+  function extractTable(md) {
+    var lines = md.split(/\r?\n/);
+    var i = 0, n = lines.length;
+    while (i < n && !/^##\s*年間カレンダー\s*$/.test(lines[i])) i++;
+    if (i >= n) return null;
+    i++;
+    // テーブル開始（| で始まる行）まで空行等を読み飛ばす
+    while (i < n && lines[i].trim().indexOf('|') !== 0) {
+      if (/^#{1,6}\s/.test(lines[i])) return null; // 次の見出しに達したらテーブル無し
+      i++;
+    }
+    var rows = [];
+    while (i < n && lines[i].trim().indexOf('|') === 0) {
+      rows.push(splitRow(lines[i]));
+      i++;
+    }
+    if (rows.length < 2) return null;
+    return rows;
+  }
+
+  // 重要度セル（例 "★★★★☆" / "**★★★★★＋**"）→ {count, plus}
+  function parseImportance(raw) {
+    var s = stripBold(raw);
+    var count = (s.match(/★/g) || []).length;
+    return { count: count, plus: /[＋+]/.test(s) };
+  }
+  // 星の見た目（塗り5段階＋「＋」）と、背骨の濃度 --w を返す
+  function renderStars(imp) {
+    var wmap = { 1: 12, 2: 22, 3: 38, 4: 62, 5: 100 };
+    var w = wmap[Math.min(imp.count, 5)] || 40;
+    var stars = '';
+    for (var i = 1; i <= 5; i++) stars += '<span class="' + (i <= imp.count ? 'on' : 'off') + '">★</span>';
+    if (imp.plus) stars += '<span class="plus">＋</span>';
+    return { html: '<div class="cal-stars" title="重要度">' + stars + '</div>', w: w };
+  }
+  // 月ラベル（"**1月**" → 数字を大きく＋「月」を添える）
+  function renderMonth(raw) {
+    var s = stripBold(raw);
+    var m = s.match(/(\d+)\s*月/);
+    if (m) return '<div class="cal-mnum">' + m[1] + '<small>月</small></div>';
+    return '<div class="cal-mnum" style="font-size:20px;">' + inline(s) + '</div>';
+  }
+  // 傾向セグメント（"**日経225：↑**"）→ ラベル／値の行
+  function renderTrend(raw) {
+    return splitBr(raw).map(function (seg) {
+      var s = stripBold(seg);
+      var idx = s.indexOf('：'); if (idx < 0) idx = s.indexOf(':');
+      if (idx >= 0) {
+        var label = s.slice(0, idx).trim();
+        var val = s.slice(idx + 1).trim();
+        return '<div class="cal-trow"><span class="cal-tlabel">' + inline(label) +
+               '</span><span class="cal-tval">' + inline(val) + '</span></div>';
+      }
+      return '<div class="cal-trow"><span class="cal-tval" style="text-align:left;flex:1 1 100%;">' + inline(s) + '</span></div>';
+    }).join('');
+  }
+
+  function buildLedger(rows) {
+    // 列は「月 / 注視するイベント / 重要度 / なぜ動きやすいか / 傾向」の固定5列。
+    var html = '<div class="cal-lhead"><span>月 / 重要度</span><span>注視するイベント</span><span>資産別の傾向</span></div>';
+    html += '<div class="cal-ledger">';
+    for (var r = 1; r < rows.length; r++) {
+      if (isSeparator(rows[r])) continue;
+      var c = rows[r];
+      var imp = parseImportance(c[2] || '');
+      var st = renderStars(imp);
+      // イベントの強調（**）は保持したいので stripBold せず inline に通す
+      var events = splitBr(c[1] || '').map(function (e) { return '<div class="ev">' + inline(e) + '</div>'; }).join('');
+      var why = splitBr(c[3] || '').map(inline).join(' ');
+      var trend = renderTrend(c[4] || '');
+
+      html += '<div class="cal-month' + (st.w >= 100 ? ' w-100' : '') + '" style="--w:' + st.w + ';">' +
+        '<div class="cal-spine">' + renderMonth(c[0] || '') + st.html + '</div>' +
+        '<div class="cal-main"><div class="cal-events">' + events + '</div>' +
+          (why ? '<div class="cal-why">' + why + '</div>' : '') + '</div>' +
+        '<div class="cal-trend">' + trend + '</div>' +
+      '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function render(key) {
+    if (cache[key]) { body.innerHTML = cache[key]; return; }
+    body.innerHTML = '<div class="cal-state">読み込み中…</div>';
+    fetch(encodeURI(SOURCES[key]))
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function (md) {
+        var rows = extractTable(md);
+        if (!rows) throw new Error('「年間カレンダー」テーブルが見つかりませんでした。');
+        var html = buildLedger(rows);
+        cache[key] = html;
+        if (current === key) body.innerHTML = html;
+      })
+      .catch(function (err) {
+        if (current === key) {
+          body.innerHTML = '<div class="cal-state">カレンダーを読み込めませんでした（' + escapeHtml(String(err.message || err)) +
+            '）。<br>ローカルでは簡易HTTPサーバ経由で開いてください（例: <code>python -m http.server</code>）。</div>';
+        }
+      });
+  }
+
+  // タブ切替
+  var tabs = document.getElementById('cal-tabs');
+  tabs.addEventListener('click', function (e) {
+    var btn = e.target.closest('.cal-tab');
+    if (!btn) return;
+    var key = btn.getAttribute('data-key');
+    if (key === current) return;
+    current = key;
+    Array.prototype.forEach.call(tabs.querySelectorAll('.cal-tab'), function (b) {
+      var active = b === btn;
+      b.classList.toggle('is-active', active);
+      b.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    render(key);
+  });
+
+  render(current);
+})();
+</script>
+</body>
+</html>
