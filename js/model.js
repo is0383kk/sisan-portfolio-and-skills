@@ -6,12 +6,14 @@
 // enrich() が銘柄ごとに参照するため、再生成を避けてモジュールスコープの定数で保持する。
 const QUOTE_URLS = {
   '任天堂': 'https://finance.yahoo.co.jp/quote/7974.T',
+  'イオン': 'https://finance.yahoo.co.jp/quote/8267.T',
   'マイクロン テクノロジー': 'https://finance.yahoo.co.jp/quote/MU',
   'エヌビディア': 'https://finance.yahoo.co.jp/quote/NVDA',
   'IonQ': 'https://finance.yahoo.co.jp/quote/IONQ',
   'クレド・テクノロジー': 'https://finance.yahoo.co.jp/quote/CRDO',
   'eMAXIS Slim 米国株式(S&P500)': 'https://finance.yahoo.co.jp/quote/03311187',
   'eMAXIS Slim 全世界株式(オール・カントリー)': 'https://finance.yahoo.co.jp/quote/0331418A',
+  'eMAXIS Slim 国内株式(TOPIX)': 'https://finance.yahoo.co.jp/quote/03317172',
   'iFreeNEXT FANG+インデックス': 'https://finance.yahoo.co.jp/quote/04311181',
   '楽天・資産づくりファンド(なかなかコース)': 'https://finance.yahoo.co.jp/quote/9I313216',
   '楽天・資産づくりファンド(じっくりコース)': 'https://finance.yahoo.co.jp/quote/9I312216',

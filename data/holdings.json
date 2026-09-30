@@ -1,6 +1,6 @@
 {
-  "_comment": "楽天証券 資産状況(2026/08時点)を反映。米国株はcur:USD(priceはドル)。投信はper:10000(1万口あたり基準価額)。同一銘柄の複数口座は合算済み。monthAbs=1単位あたり前月比だが、CSVに前月比が無いため既存値を維持している。",
-  "usdRateFallback": 159.79,
+  "_comment": "楽天証券 資産状況(2026/09時点)を反映。米国株はcur:USD(priceはドル)。投信はper:10000(1万口あたり基準価額)。同一銘柄の複数口座は合算済み。monthAbs=1単位あたり前月比だが、CSVに前月比が無いため既存値を維持している。",
+  "usdRateFallback": 156.9,
   "holdings": [
     {
       "cat": "us",
@@ -10,7 +10,7 @@
       "unit": "株",
       "shares": 20,
       "avg": 117.115,
-      "price": 217.86,
+      "price": 230.7828,
       "monthAbs": -10.6
     },
     {
@@ -21,7 +21,7 @@
       "unit": "株",
       "shares": 5,
       "avg": 362.75,
-      "price": 942.26,
+      "price": 1073.395,
       "monthAbs": 20.3
     },
     {
@@ -32,7 +32,7 @@
       "unit": "株",
       "shares": 30,
       "avg": 35,
-      "price": 39.08,
+      "price": 45.1624,
       "monthAbs": -3.29
     },
     {
@@ -43,7 +43,7 @@
       "unit": "株",
       "shares": 4,
       "avg": 165.92,
-      "price": 236.45,
+      "price": 191.0804,
       "monthAbs": 0.12
     },
     {
@@ -55,7 +55,7 @@
       "per": 10000,
       "shares": 1670403,
       "avg": 31232.5865,
-      "price": 45408,
+      "price": 44450,
       "monthAbs": -19
     },
     {
@@ -65,9 +65,9 @@
       "cur": "JPY",
       "unit": "口",
       "per": 10000,
-      "shares": 1072997,
-      "avg": 28738.2002,
-      "price": 38905,
+      "shares": 1073023,
+      "avg": 28738.4328,
+      "price": 37791,
       "monthAbs": -200
     },
     {
@@ -79,7 +79,7 @@
       "per": 10000,
       "shares": 158445,
       "avg": 18934.01,
-      "price": 18919,
+      "price": 19178,
       "monthAbs": -263
     },
     {
@@ -91,7 +91,7 @@
       "per": 10000,
       "shares": 5848,
       "avg": 51299.59,
-      "price": 101309,
+      "price": 101157,
       "monthAbs": -3768
     },
     {
@@ -102,7 +102,19 @@
       "unit": "株",
       "shares": 100,
       "avg": 1360,
-      "price": 1356.5,
+      "price": 1289,
+      "monthAbs": 0
+    },
+    {
+      "cat": "fund",
+      "name": "eMAXIS Slim 国内株式(TOPIX)",
+      "code": "TOPIX",
+      "cur": "JPY",
+      "unit": "口",
+      "per": 10000,
+      "shares": 30437,
+      "avg": 32854.75,
+      "price": 33006,
       "monthAbs": 0
     }
   ]
