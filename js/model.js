@@ -11,6 +11,7 @@ const QUOTE_URLS = {
   'エヌビディア': 'https://finance.yahoo.co.jp/quote/NVDA',
   'IonQ': 'https://finance.yahoo.co.jp/quote/IONQ',
   'クレド・テクノロジー': 'https://finance.yahoo.co.jp/quote/CRDO',
+  'アンソロピック': 'https://finance.yahoo.co.jp/quote/ANT',
   'eMAXIS Slim 米国株式(S&P500)': 'https://finance.yahoo.co.jp/quote/03311187',
   'eMAXIS Slim 全世界株式(オール・カントリー)': 'https://finance.yahoo.co.jp/quote/0331418A',
   'eMAXIS Slim 国内株式(TOPIX)': 'https://finance.yahoo.co.jp/quote/03317172',
