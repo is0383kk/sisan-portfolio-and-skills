@@ -1,6 +1,6 @@
 {
   "_comment": "楽天証券 資産状況(2026/11時点)を反映。米国株はcur:USD(priceはドル)。投信はper:10000(1万口あたり基準価額)。同一銘柄の複数口座は合算済み。monthAbs=1単位あたり前月比だが、CSVに前月比が無いため既存値を維持している。",
-  "usdRateFallback": 157.56,
+  "usdRateFallback": 158.54,
   "holdings": [
     {
       "cat": "us",
@@ -10,7 +10,7 @@
       "unit": "株",
       "shares": 20,
       "avg": 117.115,
-      "price": 204.64,
+      "price": 125.53,
       "monthAbs": -10.6
     },
     {
@@ -21,7 +21,7 @@
       "unit": "株",
       "shares": 5,
       "avg": 362.75,
-      "price": 884.74,
+      "price": 594.51,
       "monthAbs": 20.3
     },
     {
@@ -32,7 +32,7 @@
       "unit": "株",
       "shares": 30,
       "avg": 35,
-      "price": 30.04,
+      "price": 20.72,
       "monthAbs": -3.29
     },
     {
@@ -43,7 +43,7 @@
       "unit": "株",
       "shares": 4,
       "avg": 165.92,
-      "price": 150.99,
+      "price": 99.86,
       "monthAbs": 0.12
     },
     {
@@ -55,7 +55,7 @@
       "per": 10000,
       "shares": 1670403,
       "avg": 31232.5865,
-      "price": 44816,
+      "price": 42207,
       "monthAbs": -19
     },
     {
@@ -65,9 +65,9 @@
       "cur": "JPY",
       "unit": "口",
       "per": 10000,
-      "shares": 1073050,
-      "avg": 28738.6443,
-      "price": 37716,
+      "shares": 1073077,
+      "avg": 28738.8502,
+      "price": 35574,
       "monthAbs": -200
     },
     {
@@ -79,7 +79,7 @@
       "per": 10000,
       "shares": 158445,
       "avg": 18934.01,
-      "price": 18609,
+      "price": 16998,
       "monthAbs": -263
     },
     {
@@ -91,7 +91,7 @@
       "per": 10000,
       "shares": 5848,
       "avg": 51299.59,
-      "price": 95983,
+      "price": 87787,
       "monthAbs": -3768
     },
     {
@@ -102,7 +102,7 @@
       "unit": "株",
       "shares": 100,
       "avg": 1360,
-      "price": 1200.5,
+      "price": 1215.5,
       "monthAbs": 0
     },
     {
@@ -114,7 +114,18 @@
       "per": 10000,
       "shares": 30437,
       "avg": 32854.75,
-      "price": 31851,
+      "price": 29523,
+      "monthAbs": 0
+    },
+    {
+      "cat": "us",
+      "name": "アンソロピック",
+      "code": "ANT",
+      "cur": "USD",
+      "unit": "株",
+      "shares": 10,
+      "avg": 83,
+      "price": 88.91,
       "monthAbs": 0
     }
   ]
